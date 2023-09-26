@@ -445,6 +445,7 @@ typedef struct
 #define MAXOPTTEXT    32
 
 typedef struct tds_dblib_dbprocess DBPROCESS;
+typedef struct tds_dblib_queryparam TDSQUERYPARAM;
 
 /*
  * Sybase & Microsoft use different names for the dbdaterec members. 
@@ -904,6 +905,7 @@ DBINT dbspr1rowlen(DBPROCESS * dbproc);
 RETCODE dbsprhead(DBPROCESS * dbproc, char *buffer, DBINT buf_len);
 RETCODE dbsprline(DBPROCESS * dbproc, char *buffer, DBINT buf_len, DBCHAR line_char);
 RETCODE dbsqlexec(DBPROCESS * dbproc);
+RETCODE dbsqlexecparams(DBPROCESS * dbproc, const char * query, TDSQUERYPARAM * params);
 RETCODE dbsqlok(DBPROCESS * dbproc);
 RETCODE dbsqlsend(DBPROCESS * dbproc);
 int dbstrbuild(DBPROCESS * dbproc, char *charbuf, int bufsize, char *text, char *formats, ...);

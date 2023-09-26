@@ -1429,6 +1429,221 @@ dbsqlexec(DBPROCESS * dbproc)
 	return rc;
 }
 
+static const unsigned char *
+tds_paramrowalloc(TDSPARAMINFO * params, TDSCOLUMN * curcol, int param_num, void *value, int size)
+{
+    const void *row = tds_alloc_param_data(curcol);
+
+    tdsdump_log(TDS_DBG_INFO1, "tds_paramrowalloc, size = %d, data = %p, row_size = %d\n",
+                size, curcol->column_data, params->row_size);
+    if (!row)
+        return NULL;
+
+    if (value) {
+        /* TODO check for BLOB and numeric */
+        if (size > curcol->column_size) {
+            tdsdump_log(TDS_DBG_FUNC, "tds_paramrowalloc(): RESIZE %d to %d\n", size, curcol->column_size);
+            size = curcol->column_size;
+        }
+        /* TODO blobs */
+        if (!is_blob_col(curcol))
+            memcpy(curcol->column_data, value, size);
+        else {
+            TDSBLOB *blob = (TDSBLOB *) curcol->column_data;
+            blob->textvalue = tds_new(TDS_CHAR, size ? size : 1);
+            tdsdump_log(TDS_DBG_FUNC, "blob parameter supported, size %d textvalue pointer is %p\n",
+                        size, blob->textvalue);
+            if (!blob->textvalue)
+                return NULL;
+            memcpy(blob->textvalue, value, size);
+        }
+        curcol->column_cur_size = size;
+    } else {
+        tdsdump_log(TDS_DBG_FUNC, "tds_paramrowalloc(): setting parameter #%d to NULL\n", param_num);
+        curcol->column_cur_size = -1;
+    }
+
+    return (const unsigned char*) row;
+}
+
+static TDSPARAMINFO *
+tds_paraminfoalloc(TDSSOCKET * tds, TDSQUERYPARAM * first_param)
+{
+    int i;
+    TDSQUERYPARAM *p;
+    TDSCOLUMN *pcol;
+    TDSPARAMINFO *params = NULL, *new_params;
+
+    TDS_SERVER_TYPE tds_type;
+
+    tdsdump_log(TDS_DBG_FUNC, "tds_paraminfoalloc(%p, %p)\n", tds, first_param);
+
+    /* sanity */
+    if (!first_param)
+        return NULL;
+
+    for (i = 0, p = first_param; p != NULL; p = p->next, i++) {
+        const unsigned char *prow;
+        BYTE *temp_value = NULL;
+        TDS_INT temp_datalen = 0;
+
+        if (!(new_params = tds_alloc_param_result(params)))
+            goto memory_error;
+        params = new_params;
+
+        if (p->value != NULL) {
+            /* datafmt.datalen is ignored for fixed length types */
+            if (is_fixed_type(p->datatype)) {
+                temp_datalen = tds_get_size_by_type(p->datatype);
+            } else {
+                temp_datalen = p->datalen;
+            }
+
+            temp_value = p->value;
+        }
+
+        pcol = params->columns[i];
+
+        /* meta data */
+        if (p->name)
+            if (!tds_dstr_copy(&pcol->column_name, p->name))
+                goto memory_error;
+
+        tds_set_param_type(tds->conn, pcol, p->datatype);
+
+        if (temp_datalen <= 0 && temp_value)
+            temp_datalen = strlen((const char*) temp_value);
+
+        if (is_numeric_type(p->datatype)) {
+            pcol->column_scale = p->scale;
+            pcol->column_prec = p->precision;
+            if (pcol->column_scale < 0 || pcol->column_prec < 0
+                || pcol->column_prec > MAXPRECISION || pcol->column_scale > pcol->column_prec)
+                goto generic_error;
+        }
+
+        if (pcol->column_varint_size) {
+            if (p->maxlen < 0) {
+                goto generic_error;
+            }
+            pcol->on_server.column_size = pcol->column_size = p->maxlen;
+            pcol->column_cur_size = temp_value ? temp_datalen : -1;
+            if (temp_datalen > 0 && temp_datalen > p->maxlen)
+                pcol->on_server.column_size = pcol->column_size = temp_datalen;
+        } else {
+            pcol->column_cur_size = pcol->column_size;
+        }
+
+        if (p->output)
+            pcol->column_output = 1;
+        else
+            pcol->column_output = 0;
+
+        /* actual data */
+        tdsdump_log(TDS_DBG_FUNC, "tds_paraminfoalloc: output = %d, maxlen %d \n", p->output, p->maxlen);
+        tdsdump_log(TDS_DBG_FUNC,
+                    "tds_paraminfoalloc: name = %s, varint size %d "
+                    "column_type %d size %d, %d column_cur_size %d column_output = %d\n",
+                    tds_dstr_cstr(&pcol->column_name),
+                    pcol->column_varint_size, pcol->column_type,
+                    pcol->on_server.column_size, pcol->column_size,
+                    pcol->column_cur_size, pcol->column_output);
+        prow = tds_paramrowalloc(params, pcol, i, temp_value, temp_datalen);
+        if (!prow)
+            goto memory_error;
+    }
+
+    return params;
+
+    memory_error:
+    tdsdump_log(TDS_DBG_SEVERE, "out of memory for rpc!");
+    generic_error:
+    tds_free_param_results(params);
+    return NULL;
+}
+
+/**
+ * \ingroup dblib_core
+ * \brief send the SQL command to the server and wait for an answer.
+ */
+RETCODE
+dbsqlexecparams(DBPROCESS * dbproc, const char * query, TDSQUERYPARAM * params)
+{
+    size_t cmd_len, buf_len, newsz;
+
+    tdsdump_log(TDS_DBG_FUNC, "dbsqlexecparams(%p, %s, %p)\n", dbproc, query, params);
+    CHECK_CONN(FAIL);
+    CHECK_NULP(query, "dbsqlexecparams", 2, FAIL);
+
+    dbproc->avail_flag = FALSE;
+
+    if (dbproc->command_state == DBCMDSENT) {
+        if (!dbproc->noautofree) {
+            dbfreebuf(dbproc);
+        }
+    }
+
+    dbproc->command_state = DBCMDPEND;
+
+    TDSSOCKET *tds;
+    char *cmdstr;
+    TDSRET rc;
+    TDS_INT result_type;
+    char timestr[256];
+
+    tds = dbproc->tds_socket;
+
+    if (tds->state == TDS_PENDING) {
+
+        if (tds_process_tokens(tds, &result_type, NULL, TDS_TOKEN_TRAILING) != TDS_NO_MORE_RESULTS) {
+            dbperror(dbproc, SYBERPND, 0);
+            dbproc->command_state = DBCMDSENT;
+            return FAIL;
+        }
+    }
+
+    if (dbproc->dboptcmd) {
+        if ((cmdstr = dbstring_get(dbproc->dboptcmd)) == NULL) {
+            dbperror(dbproc, SYBEASEC, 0); /* Attempt to send an empty command buffer to the server */
+            return FAIL;
+        }
+        rc = tds_submit_query(dbproc->tds_socket, cmdstr);
+        free(cmdstr);
+        dbstring_free(&(dbproc->dboptcmd));
+        if (TDS_FAILED(rc)) {
+            return FAIL;
+        }
+        dbproc->avail_flag = FALSE;
+        dbproc->envchange_rcv = 0;
+        dbproc->dbresults_state = _DB_RES_INIT;
+        while ((rc = tds_process_tokens(tds, &result_type, NULL, TDS_TOKEN_RESULTS))
+               == TDS_SUCCESS);
+        if (rc != TDS_NO_MORE_RESULTS) {
+            return FAIL;
+        }
+    }
+    dbproc->more_results = TRUE;
+
+    if (dbproc->ftos != NULL) {
+        fprintf(dbproc->ftos, "%s\n", query);
+        fprintf(dbproc->ftos, "go /* %s */\n", _dbprdate(timestr));
+        fflush(dbproc->ftos);
+    }
+
+    TDSPARAMINFO * param_info = tds_paraminfoalloc(tds, params);
+    if (TDS_FAILED(tds_submit_query_params(dbproc->tds_socket, query, param_info, NULL))) {
+        return FAIL;
+    }
+    tds_free_param_results(param_info);
+
+    dbproc->avail_flag = FALSE;
+    dbproc->envchange_rcv = 0;
+    dbproc->dbresults_state = _DB_RES_INIT;
+    dbproc->command_state = DBCMDSENT;
+
+    return dbsqlok(dbproc);
+}
+
 /**
  * \ingroup dblib_core
  * \brief Change current database. 
