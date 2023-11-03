@@ -796,6 +796,9 @@ dbsetlname(LOGINREC * login, const char *value, int which)
 	case DBSETDBNAME:
 		copy_ret = !!tds_dstr_copy(&login->tds_login->database, value_nonull);
 		break;
+    case DBSETENCRYPTION:
+        copy_ret = tds_set_encryption(login->tds_login, value_nonull);
+        break;
 	case DBSETSERVERPRINCIPAL:
 		copy_ret = !!tds_dstr_copy(&login->tds_login->server_spn, value_nonull);
 		break;
