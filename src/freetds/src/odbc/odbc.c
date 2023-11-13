@@ -100,7 +100,7 @@ static void odbc_ird_check(TDS_STMT * stmt);
 /* utils to check handles */
 #define INIT_HANDLE(t, n) \
 	TDS_##t *n = (TDS_##t*)h##n; \
-	if (SQL_NULL_H##t  == h##n || !IS_H##t(h##n)) return SQL_INVALID_HANDLE; \
+	if (SQL_NULL_H##t  == h##n || (n)->htype != SQL_HANDLE_##t) return SQL_INVALID_HANDLE; \
 	tds_mutex_lock(&n->mtx); \
 	CHECK_##t##_EXTRA(n); \
 	odbc_errs_reset(&n->errs);
@@ -1405,7 +1405,7 @@ _SQLBindParameter(SQLHSTMT hstmt, SQLUSMALLINT ipar, SQLSMALLINT fParamType, SQL
 	TDS_DESC *apd, *ipd;
 	struct _drecord *drec;
 	SQLSMALLINT orig_apd_size, orig_ipd_size;
-	int is_numeric = 0;
+	bool is_numeric = false;
 
 	ODBC_ENTER_HSTMT;
 
@@ -1428,7 +1428,7 @@ _SQLBindParameter(SQLHSTMT hstmt, SQLUSMALLINT ipar, SQLSMALLINT fParamType, SQL
 	}
 
 	/* Check max buffer length */
-	if (cbValueMax < 0) {
+	if (cbValueMax < 0 && cbValueMax != SQL_NTS) {
 		odbc_errs_add(&stmt->errs, "HY090", NULL);
 		ODBC_EXIT_(stmt);
 	}
@@ -1436,7 +1436,7 @@ _SQLBindParameter(SQLHSTMT hstmt, SQLUSMALLINT ipar, SQLSMALLINT fParamType, SQL
 
 	/* check cbColDef and ibScale */
 	if (fSqlType == SQL_DECIMAL || fSqlType == SQL_NUMERIC) {
-		is_numeric = 1;
+		is_numeric = true;
 		if (cbColDef < 1 || cbColDef > 38) {
 			odbc_errs_add(&stmt->errs, "HY104", "Invalid precision value");
 			ODBC_EXIT_(stmt);
@@ -1453,8 +1453,62 @@ _SQLBindParameter(SQLHSTMT hstmt, SQLUSMALLINT ipar, SQLSMALLINT fParamType, SQL
 		ODBC_EXIT_(stmt);
 	}
 
-	/* fill APD related fields */
+	/* special checks for table type */
+	if (fSqlType == SQL_SS_TABLE) {
+		/* Table types are strictly read-only */
+		if (fParamType != SQL_PARAM_INPUT) {
+			odbc_errs_add(&stmt->errs, "HY105", NULL);
+			ODBC_EXIT_(stmt);
+		}
+
+		/* Only SQL_C_DEFAULT is accepted */
+		if (fCType != SQL_C_DEFAULT) {
+			odbc_errs_add(&stmt->errs, "07006", NULL);
+			ODBC_EXIT_(stmt);
+		}
+		fCType = SQL_C_BINARY;
+	}
+
 	apd = stmt->apd;
+	ipd = stmt->ipd;
+
+	/* If the parameter focus is set to 0, bind values as arguments */
+	/* Otherwise, bind values as the columns of a table-valued parameter */
+	if (stmt->attr.param_focus != 0) {
+		SQLTVP *tvp;
+
+		/* a table type cannot contain a table type */
+		if (fSqlType == SQL_SS_TABLE) {
+			odbc_errs_add(&stmt->errs, "HY004", NULL);
+			ODBC_EXIT_(stmt);
+		}
+
+		/* Columns of table types are strictly read-only */
+		if (fParamType != SQL_PARAM_INPUT) {
+			odbc_errs_add(&stmt->errs, "HY105", NULL);
+			ODBC_EXIT_(stmt);
+		}
+
+		/* check index */
+		if (stmt->attr.param_focus > ipd->header.sql_desc_count) {
+			odbc_errs_add(&stmt->errs, "IM020", NULL);
+			ODBC_EXIT_(stmt);
+		}
+
+		drec = &ipd->records[stmt->attr.param_focus - 1];
+
+		/* check idp type */
+		if (drec->sql_desc_concise_type != SQL_SS_TABLE) {
+			odbc_errs_add(&stmt->errs, "IM020", NULL);
+			ODBC_EXIT_(stmt);
+		}
+
+		tvp = (SQLTVP *) drec->sql_desc_data_ptr;
+		apd = tvp->apd;
+		ipd = tvp->ipd;
+	}
+
+	/* fill APD related fields */
 	orig_apd_size = apd->header.sql_desc_count;
 	if (ipar > apd->header.sql_desc_count && desc_alloc_records(apd, ipar) != SQL_SUCCESS) {
 		odbc_errs_add(&stmt->errs, "HY001", NULL);
@@ -1477,8 +1531,10 @@ _SQLBindParameter(SQLHSTMT hstmt, SQLUSMALLINT ipar, SQLSMALLINT fParamType, SQL
 	drec->sql_desc_octet_length_ptr = pcbValue;
 	drec->sql_desc_data_ptr = (char *) rgbValue;
 
+	if (fSqlType == SQL_SS_TABLE)
+		drec->sql_desc_length = 1;
+
 	/* field IPD related fields */
-	ipd = stmt->ipd;
 	orig_ipd_size = ipd->header.sql_desc_count;
 	if (ipar > ipd->header.sql_desc_count && desc_alloc_records(ipd, ipar) != SQL_SUCCESS) {
 		desc_alloc_records(apd, orig_apd_size);
@@ -1488,6 +1544,7 @@ _SQLBindParameter(SQLHSTMT hstmt, SQLUSMALLINT ipar, SQLSMALLINT fParamType, SQL
 	drec = &ipd->records[ipar - 1];
 
 	drec->sql_desc_parameter_type = fParamType;
+
 	if (odbc_set_concise_sql_type(fSqlType, drec, 0) != SQL_SUCCESS) {
 		desc_alloc_records(ipd, orig_ipd_size);
 		desc_alloc_records(apd, orig_apd_size);
@@ -1499,6 +1556,36 @@ _SQLBindParameter(SQLHSTMT hstmt, SQLUSMALLINT ipar, SQLSMALLINT fParamType, SQL
 		drec->sql_desc_scale = ibScale;
 	} else {
 		drec->sql_desc_length = cbColDef;
+	}
+
+	if (fSqlType == SQL_SS_TABLE) {
+		SQLTVP *tvp;
+		int wide = 1;
+
+		tvp = tvp_alloc(stmt);
+		if (tvp == NULL) {
+			desc_alloc_records(ipd, orig_ipd_size);
+			desc_alloc_records(apd, orig_apd_size);
+			odbc_errs_add(&stmt->errs, "HY001", NULL);
+			ODBC_EXIT_(stmt);
+		}
+		tvp->apd->header.sql_desc_array_size = cbColDef;
+
+		if (!odbc_dstr_copy_oct(stmt->dbc, &tvp->type_name, cbValueMax, (ODBC_CHAR *) rgbValue)) {
+			free(tvp);
+			desc_alloc_records(ipd, orig_ipd_size);
+			desc_alloc_records(apd, orig_apd_size);
+			odbc_errs_add(&stmt->errs, "HY001", NULL);
+			ODBC_EXIT_(stmt);
+		}
+
+		/* Use this the column type as a marker for us */
+		/* to free up memory allocated with odbc_alloc_table() */
+		drec->sql_desc_type = drec->sql_desc_concise_type = SQL_SS_TABLE;
+
+		drec->sql_desc_data_ptr = tvp;
+
+		drec->sql_desc_length = 0;
 	}
 
 	ODBC_EXIT_(stmt);
@@ -1650,8 +1737,12 @@ _SQLAllocEnv(SQLHENV FAR * phenv, SQLINTEGER odbc_version)
 	ctx->err_handler = odbc_errmsg_handler;
 
 	/* ODBC has its own format */
+	free(ctx->locale->datetime_fmt);
+	ctx->locale->datetime_fmt = strdup("%Y-%m-%d %H:%M:%S.%z");
 	free(ctx->locale->date_fmt);
-	ctx->locale->date_fmt = strdup("%Y-%m-%d %H:%M:%S.%z");
+	ctx->locale->date_fmt = strdup("%Y-%m-%d");
+	free(ctx->locale->time_fmt);
+	ctx->locale->time_fmt = strdup("%H:%M:%S.%z");
 
 	tds_mutex_init(&env->mtx);
 	*phenv = (SQLHENV) env;
@@ -1802,6 +1893,8 @@ _SQLAllocStmt(SQLHDBC hdbc, SQLHSTMT FAR * phstmt)
 
 	if (dbc->attr.cursor_type != SQL_CURSOR_FORWARD_ONLY)
 		_SQLSetStmtAttr(stmt, SQL_CURSOR_TYPE, (SQLPOINTER) (TDS_INTPTR) dbc->attr.cursor_type, SQL_IS_INTEGER _wide0);
+
+	stmt->attr.param_focus = 0;
 
 	ODBC_EXIT_(dbc);
 }
@@ -2538,12 +2631,40 @@ ODBC_FUNC(SQLGetDescRec, (P(SQLHDESC,hdesc), P(SQLSMALLINT,RecordNumber), PCHARO
 	ODBC_EXIT(desc, rc);
 }
 
+static TDS_DESC*
+desc_get_focused(TDS_DESC *desc)
+{
+	struct _drecord *drec;
+	int focus = desc->focus;
+	bool was_apd = false;
+
+	if (focus <= 0)
+		return desc;
+	if (desc->type != DESC_IPD && IS_HSTMT(desc->parent)) {
+		desc = ((TDS_STMT *) desc->parent)->ipd;
+		was_apd = true;
+	}
+	if (desc->type == DESC_IPD) {
+		if (focus > desc->header.sql_desc_count)
+			return desc;
+
+		drec = &desc->records[focus - 1];
+		if (drec->sql_desc_concise_type != SQL_SS_TABLE)
+			return desc;
+		if (was_apd)
+			return ((SQLTVP *) drec->sql_desc_data_ptr)->apd;
+		return ((SQLTVP *) drec->sql_desc_data_ptr)->ipd;
+	}
+	return desc;
+}
+
 ODBC_FUNC(SQLGetDescField, (P(SQLHDESC,hdesc), P(SQLSMALLINT,icol), P(SQLSMALLINT,fDescType), P(SQLPOINTER,Value),
 	P(SQLINTEGER,BufferLength), P(SQLINTEGER *,StringLength) WIDE))
 {
 	struct _drecord *drec;
 	SQLRETURN result = SQL_SUCCESS;
 	SQLINTEGER dummy_size;
+	TDS_DESC *fdesc;
 
 	ODBC_ENTER_HDESC;
 
@@ -2565,41 +2686,43 @@ ODBC_FUNC(SQLGetDescField, (P(SQLHDESC,hdesc), P(SQLSMALLINT,icol), P(SQLSMALLIN
 	if (!StringLength)
 		StringLength = &dummy_size;
 
+	fdesc = desc_get_focused(desc);
+
 	/* dont check column index for these */
 	switch (fDescType) {
 	case SQL_DESC_ALLOC_TYPE:
-		IOUT(SQLSMALLINT, desc->header.sql_desc_alloc_type);
+		IOUT(SQLSMALLINT, fdesc->header.sql_desc_alloc_type);
 		ODBC_EXIT_(desc);
 		break;
 	case SQL_DESC_ARRAY_SIZE:
-		IOUT(SQLULEN, desc->header.sql_desc_array_size);
+		IOUT(SQLULEN, fdesc->header.sql_desc_array_size);
 		ODBC_EXIT_(desc);
 		break;
 	case SQL_DESC_ARRAY_STATUS_PTR:
-		IOUT(SQLUSMALLINT *, desc->header.sql_desc_array_status_ptr);
+		IOUT(SQLUSMALLINT *, fdesc->header.sql_desc_array_status_ptr);
 		ODBC_EXIT_(desc);
 		break;
 	case SQL_DESC_BIND_OFFSET_PTR:
-		IOUT(SQLLEN *, desc->header.sql_desc_bind_offset_ptr);
+		IOUT(SQLLEN *, fdesc->header.sql_desc_bind_offset_ptr);
 		ODBC_EXIT_(desc);
 		break;
 	case SQL_DESC_BIND_TYPE:
-		IOUT(SQLINTEGER, desc->header.sql_desc_bind_type);
+		IOUT(SQLINTEGER, fdesc->header.sql_desc_bind_type);
 		ODBC_EXIT_(desc);
 		break;
 	case SQL_DESC_COUNT:
 		IRD_UPDATE(desc, &desc->errs, ODBC_EXIT(desc, SQL_ERROR));
-		IOUT(SQLSMALLINT, desc->header.sql_desc_count);
+		IOUT(SQLSMALLINT, fdesc->header.sql_desc_count);
 		ODBC_EXIT_(desc);
 		break;
 	case SQL_DESC_ROWS_PROCESSED_PTR:
-		IOUT(SQLULEN *, desc->header.sql_desc_rows_processed_ptr);
+		IOUT(SQLULEN *, fdesc->header.sql_desc_rows_processed_ptr);
 		ODBC_EXIT_(desc);
 		break;
 	}
 
 	IRD_UPDATE(desc, &desc->errs, ODBC_EXIT(desc, SQL_ERROR));
-	if (!desc->header.sql_desc_count) {
+	if (!fdesc->header.sql_desc_count) {
 		odbc_errs_add(&desc->errs, "07005", NULL);
 		ODBC_EXIT_(desc);
 	}
@@ -2608,9 +2731,9 @@ ODBC_FUNC(SQLGetDescField, (P(SQLHDESC,hdesc), P(SQLSMALLINT,icol), P(SQLSMALLIN
 		odbc_errs_add(&desc->errs, "07009", "Column out of range");
 		ODBC_EXIT_(desc);
 	}
-	if (icol > desc->header.sql_desc_count)
+	if (icol > fdesc->header.sql_desc_count)
 		ODBC_EXIT(desc, SQL_NO_DATA);
-	drec = &desc->records[icol - 1];
+	drec = &fdesc->records[icol - 1];
 
 	tdsdump_log(TDS_DBG_INFO1, "SQLGetDescField: fDescType is %d\n", fDescType);
 
@@ -2752,6 +2875,7 @@ ODBC_FUNC(SQLSetDescField, (P(SQLHDESC,hdesc), P(SQLSMALLINT,icol), P(SQLSMALLIN
 {
 	struct _drecord *drec;
 	SQLRETURN result = SQL_SUCCESS;
+	TDS_DESC *fdesc;
 
 	ODBC_ENTER_HDESC;
 
@@ -2775,6 +2899,8 @@ ODBC_FUNC(SQLSetDescField, (P(SQLHDESC,hdesc), P(SQLSMALLINT,icol), P(SQLSMALLIN
 		ODBC_EXIT_(desc);
 	}
 
+	fdesc = desc_get_focused(desc);
+
 	/* dont check column index for these */
 	switch (fDescType) {
 	case SQL_DESC_ALLOC_TYPE:
@@ -2782,19 +2908,19 @@ ODBC_FUNC(SQLSetDescField, (P(SQLHDESC,hdesc), P(SQLSMALLINT,icol), P(SQLSMALLIN
 		ODBC_EXIT_(desc);
 		break;
 	case SQL_DESC_ARRAY_SIZE:
-		IIN(SQLULEN, desc->header.sql_desc_array_size);
+		IIN(SQLULEN, fdesc->header.sql_desc_array_size);
 		ODBC_EXIT_(desc);
 		break;
 	case SQL_DESC_ARRAY_STATUS_PTR:
-		PIN(SQLUSMALLINT *, desc->header.sql_desc_array_status_ptr);
+		PIN(SQLUSMALLINT *, fdesc->header.sql_desc_array_status_ptr);
 		ODBC_EXIT_(desc);
 		break;
 	case SQL_DESC_ROWS_PROCESSED_PTR:
-		PIN(SQLULEN *, desc->header.sql_desc_rows_processed_ptr);
+		PIN(SQLULEN *, fdesc->header.sql_desc_rows_processed_ptr);
 		ODBC_EXIT_(desc);
 		break;
 	case SQL_DESC_BIND_TYPE:
-		IIN(SQLINTEGER, desc->header.sql_desc_bind_type);
+		IIN(SQLINTEGER, fdesc->header.sql_desc_bind_type);
 		ODBC_EXIT_(desc);
 		break;
 	case SQL_DESC_COUNT:
@@ -2805,7 +2931,7 @@ ODBC_FUNC(SQLSetDescField, (P(SQLHDESC,hdesc), P(SQLSMALLINT,icol), P(SQLSMALLIN
 				odbc_errs_add(&desc->errs, "07009", NULL);
 				ODBC_EXIT_(desc);
 			}
-			result = desc_alloc_records(desc, n);
+			result = desc_alloc_records(fdesc, n);
 			if (result == SQL_ERROR)
 				odbc_errs_add(&desc->errs, "HY001", NULL);
 			ODBC_EXIT(desc, result);
@@ -2813,16 +2939,16 @@ ODBC_FUNC(SQLSetDescField, (P(SQLHDESC,hdesc), P(SQLSMALLINT,icol), P(SQLSMALLIN
 		break;
 	}
 
-	if (!desc->header.sql_desc_count) {
+	if (!fdesc->header.sql_desc_count) {
 		odbc_errs_add(&desc->errs, "07005", NULL);
 		ODBC_EXIT_(desc);
 	}
 
-	if (icol <= 0 || icol > desc->header.sql_desc_count) {
+	if (icol <= 0 || icol > fdesc->header.sql_desc_count) {
 		odbc_errs_add(&desc->errs, "07009", "Column out of range");
 		ODBC_EXIT_(desc);
 	}
-	drec = &desc->records[icol - 1];
+	drec = &fdesc->records[icol - 1];
 
 	tdsdump_log(TDS_DBG_INFO1, "SQLSetDescField: fDescType is %d\n", fDescType);
 
@@ -2837,7 +2963,7 @@ ODBC_FUNC(SQLSetDescField, (P(SQLHDESC,hdesc), P(SQLSMALLINT,icol), P(SQLSMALLIN
 		break;
 	case SQL_DESC_CONCISE_TYPE:
 		DESC_SET_NEED_REPREPARE;
-		if (desc->type == DESC_IPD)
+		if (fdesc->type == DESC_IPD)
 			result = odbc_set_concise_sql_type((SQLSMALLINT) (TDS_INTPTR) Value, drec, 0);
 		else
 			result = odbc_set_concise_c_type((SQLSMALLINT) (TDS_INTPTR) Value, drec, 0);
@@ -2872,7 +2998,7 @@ ODBC_FUNC(SQLSetDescField, (P(SQLHDESC,hdesc), P(SQLSMALLINT,icol), P(SQLSMALLIN
 		result = SQL_ERROR;
 		break;
 	case SQL_DESC_NAME:
-		if (!odbc_dstr_copy_oct(desc_get_dbc(desc), &drec->sql_desc_name, BufferLength, (ODBC_CHAR*) Value)) {
+		if (!odbc_dstr_copy_oct(desc_get_dbc(fdesc), &drec->sql_desc_name, BufferLength, (ODBC_CHAR*) Value)) {
 			odbc_errs_add(&desc->errs, "HY001", NULL);
 			result = SQL_ERROR;
 		}
@@ -4371,7 +4497,7 @@ _SQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER Value, SQLINTEG
 		break;
 	case SQL_ATTR_METADATA_ID:
 		size = sizeof(stmt->attr.metadata_id);
-		src = &stmt->attr.noscan;
+		src = &stmt->attr.metadata_id;
 		break;
 	case SQL_ATTR_NOSCAN:
 		size = sizeof(stmt->attr.noscan);
@@ -6719,6 +6845,16 @@ _SQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr, SQLIN
 			odbc_errs_add(&stmt->errs, "HY001", NULL);
 			break;
 		}
+		break;
+	case SQL_SOPT_SS_PARAM_FOCUS:
+		if (ui > 0 && (ui > stmt->apd->header.sql_desc_count
+			       || stmt->ipd->records[ui - 1].sql_desc_concise_type != SQL_SS_TABLE)) {
+			odbc_errs_add(&stmt->errs, "IM020", NULL);
+			break;
+		}
+		stmt->attr.param_focus = ui;
+		stmt->orig_apd->focus = ui;
+		stmt->ipd->focus = ui;
 		break;
 	default:
 		odbc_errs_add(&stmt->errs, "HY092", NULL);

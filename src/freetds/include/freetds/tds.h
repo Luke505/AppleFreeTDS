@@ -57,6 +57,7 @@ typedef struct tds_bcpinfo TDSBCPINFO;
 
 #include <freetds/version.h>
 #include <freetds/sysdep_private.h>
+#include <freetds/sysdep_types.h>
 #include <freetds/thread.h>
 #include <freetds/bool.h>
 #include <freetds/macros.h>
@@ -129,8 +130,6 @@ typedef int32_t TDS_INT;			/* 32-bit int      */
 typedef uint32_t TDS_UINT;			/* 32-bit unsigned */
 typedef int64_t TDS_INT8;			/* 64-bit integer  */
 typedef uint64_t TDS_UINT8;			/* 64-bit unsigned */
-typedef intptr_t TDS_INTPTR;
-typedef uintptr_t TDS_UINTPTR;
 typedef tds_sysdep_real32_type TDS_REAL;	/* 32-bit real     */
 typedef tds_sysdep_real64_type TDS_FLOAT;	/* 64-bit real     */
 
@@ -455,7 +454,9 @@ bool is_tds_type_valid(int type)
 #define TDS_STR_USE_UTF_16	"use utf-16"
 #define TDS_STR_LANGUAGE	"language"
 #define TDS_STR_APPENDMODE	"dump file append"
-#define TDS_STR_DATEFMT	"date format"
+#define TDS_STR_DATETIMEFMT	"date format"
+#define TDS_STR_DATEFMT	"date-only format"
+#define TDS_STR_TIMEFMT	"time-only format"
 #define TDS_STR_INSTANCE "instance"
 #define TDS_STR_ASA_DATABASE	"asa database"
 #define TDS_STR_DATABASE	"database"
@@ -567,6 +568,7 @@ typedef struct tds_login
 	unsigned int check_ssl_hostname:1;
 	unsigned int readonly_intent:1;
 	unsigned int enable_tls_v1:1;
+	unsigned int enable_tls_v1_specified:1;
 	unsigned int server_is_valid:1;
 } TDSLOGIN;
 
@@ -582,7 +584,9 @@ typedef struct tds_locale
 {
 	char *language;
 	char *server_charset;
+	char *datetime_fmt;
 	char *date_fmt;
+	char *time_fmt;
 } TDSLOCALE;
 
 /** 
@@ -594,7 +598,7 @@ typedef struct tds_blob
 	TDS_CHAR *textvalue;
 	TDS_CHAR textptr[16];
 	TDS_CHAR timestamp[8];
-	unsigned char valid_ptr;
+	bool valid_ptr;
 } TDSBLOB;
 
 /**
@@ -1144,6 +1148,19 @@ struct tds_connection
 	int spid;
 	int client_spid;
 
+	/**
+	 * Ratio between bytes allocated for a NCHAR type and type length (Sybase).
+	 * For instance in case a NVARCHAR(3) takes 9 bytes it's 3.
+	 */
+	uint8_t ncharsize;
+
+	/**
+	 * Ratio between bytes allocated for a UNICHAR type and type length (Sybase).
+	 * For instance in case a UNIVARCHAR(2) takes 4 bytes it's 2.
+	 * It really should be only 2.
+	 */
+	uint8_t unicharsize;
+
 	void *tls_session;
 #if defined(HAVE_GNUTLS)
 	void *tls_credentials;
@@ -1271,6 +1288,20 @@ struct tds_socket
 #define tds_get_s(tds) ((tds)->conn->s)
 #define tds_set_s(tds, val) do { ((tds)->conn->s) = (val); } while(0)
 
+typedef struct tds_tvp_row
+{
+	TDSPARAMINFO *params;
+	struct tds_tvp_row *next;
+} TDS_TVP_ROW;
+
+typedef struct tds_tvp
+{
+	char *schema;
+	char *name;
+	TDSPARAMINFO *metadata;
+	TDS_TVP_ROW *row;
+} TDS_TVP;
+
 
 /* config.c */
 const TDS_COMPILETIME_SETTINGS *tds_get_compiletime_settings(void);
@@ -1364,6 +1395,7 @@ void tds_free_packets(TDSPACKET *packet);
 TDSBCPINFO *tds_alloc_bcpinfo(void);
 void tds_free_bcpinfo(TDSBCPINFO *bcpinfo);
 void tds_deinit_bcpinfo(TDSBCPINFO *bcpinfo);
+void tds_deinit_tvp(TDS_TVP *table);
 
 
 /* login.c */
@@ -1402,8 +1434,8 @@ TDSRET tds_submit_unprepare(TDSSOCKET * tds, TDSDYNAMIC * dyn);
 TDSRET tds_submit_rpc(TDSSOCKET * tds, const char *rpc_name, TDSPARAMINFO * params, TDSHEADERS * head);
 TDSRET tds_submit_optioncmd(TDSSOCKET * tds, TDS_OPTION_CMD command, TDS_OPTION option, TDS_OPTION_ARG *param, TDS_INT param_size);
 TDSRET tds_submit_begin_tran(TDSSOCKET *tds);
-TDSRET tds_submit_rollback(TDSSOCKET *tds, int cont);
-TDSRET tds_submit_commit(TDSSOCKET *tds, int cont);
+TDSRET tds_submit_rollback(TDSSOCKET *tds, bool cont);
+TDSRET tds_submit_commit(TDSSOCKET *tds, bool cont);
 TDSRET tds_disconnect(TDSSOCKET * tds);
 size_t tds_quote_id(TDSSOCKET * tds, char *buffer, const char *id, int idlen);
 size_t tds_quote_id_rpc(TDSSOCKET * tds, char *buffer, const char *id, int idlen);
@@ -1438,7 +1470,6 @@ TDSRET tds_multiple_execute(TDSSOCKET *tds, TDSMULTIPLE *multiple, TDSDYNAMIC * 
 
 /* token.c */
 TDSRET tds_process_cancel(TDSSOCKET * tds);
-int tds_get_token_size(int marker);
 TDSRET tds_process_login_tokens(TDSSOCKET * tds);
 TDSRET tds_process_simple_query(TDSSOCKET * tds);
 int tds5_send_optioncmd(TDSSOCKET * tds, TDS_OPTION_CMD tds_command, TDS_OPTION tds_option, TDS_OPTION_ARG * tds_argument,
@@ -1659,6 +1690,14 @@ enum tds_bcp_directions
 	TDS_BCP_QUERYOUT = 3
 };
 
+typedef struct tds5_colinfo
+{
+	TDS_TINYINT type;
+	TDS_TINYINT status;
+	TDS_SMALLINT offset;
+	TDS_INT length;
+} TDS5COLINFO;
+
 struct tds_bcpinfo
 {
 	const char *hint;
@@ -1670,6 +1709,8 @@ struct tds_bcpinfo
 	TDS_INT xfer_init;
 	TDS_INT bind_count;
 	TDSRESULTINFO *bindinfo;
+	TDS5COLINFO *sybase_colinfo;
+	TDS_INT sybase_count;
 };
 
 TDSRET tds_bcp_init(TDSSOCKET *tds, TDSBCPINFO *bcpinfo);

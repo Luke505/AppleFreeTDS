@@ -724,6 +724,8 @@ odbc_sql_to_c_type_default(int sql_type)
 	case SQL_VARBINARY:
 	case SQL_LONGVARBINARY:
 		return SQL_C_BINARY;
+	case SQL_SS_TABLE:
+		return SQL_C_BINARY;
 		/* TODO interval types */
 	default:
 		return 0;
@@ -841,6 +843,8 @@ odbc_sql_to_server_type(TDSCONNECTION * conn, int sql_type, int sql_unsigned)
 		return SYBVARBINARY;
 	case SQL_LONGVARBINARY:
 		return SYBIMAGE;
+	case SQL_SS_TABLE:
+		return SYBMSTABLE;
 		/* TODO interval types */
 	default:
 		return TDS_INVALID_TYPE;
@@ -941,6 +945,8 @@ odbc_get_param_len(const struct _drecord *drec_axd, const struct _drecord *drec_
 	TYPE_NORMAL(SQL_TYPE_DATE) \
 	TYPE_NORMAL(SQL_TYPE_TIME) \
 \
+	TYPE_NORMAL(SQL_SS_TABLE) \
+\
 	TYPE_VERBOSE_START(SQL_DATETIME) \
 	TYPE_VERBOSE_DATE(SQL_DATETIME, SQL_CODE_TIMESTAMP, SQL_TYPE_TIMESTAMP, SQL_TIMESTAMP) \
 	TYPE_VERBOSE_END(SQL_DATETIME)
@@ -954,7 +960,8 @@ odbc_get_concise_sql_type(SQLSMALLINT type, SQLSMALLINT interval)
 #define TYPE_VERBOSE_DATE(t, interval, concise, old) \
 	case interval: return concise;
 #define TYPE_VERBOSE_END(t) \
-	}
+	} \
+	break;
 
 	switch (type) {
 		SQL_TYPES;
@@ -990,9 +997,13 @@ odbc_set_concise_sql_type(SQLSMALLINT concise_type, struct _drecord * drec, int 
 		return SQL_ERROR;
 	}
 	if (!check_only) {
+		if (drec->sql_desc_concise_type == SQL_SS_TABLE)
+			tvp_free((SQLTVP *) drec->sql_desc_data_ptr);
+
 		drec->sql_desc_concise_type = concise_type;
 		drec->sql_desc_type = type;
 		drec->sql_desc_datetime_interval_code = interval_code;
+		drec->sql_desc_data_ptr = NULL;
 
 		switch (drec->sql_desc_type) {
 		case SQL_NUMERIC:
@@ -1075,7 +1086,8 @@ odbc_get_concise_c_type(SQLSMALLINT type, SQLSMALLINT interval)
 #define TYPE_VERBOSE_DATE(t, interval, concise, old) \
 	case interval: return concise;
 #define TYPE_VERBOSE_END(t) \
-	}
+	} \
+	break;
 
 	switch (type) {
 		C_TYPES;
@@ -1117,6 +1129,7 @@ odbc_set_concise_c_type(SQLSMALLINT concise_type, struct _drecord * drec, int ch
 		drec->sql_desc_concise_type = concise_type;
 		drec->sql_desc_type = type;
 		drec->sql_desc_datetime_interval_code = interval_code;
+		drec->sql_desc_data_ptr = NULL;
 
 		switch (drec->sql_desc_type) {
 		case SQL_C_NUMERIC:

@@ -262,10 +262,10 @@ dblib_get_tds_ctx(void)
 		g_dblib_ctx.tds_ctx->err_handler = _dblib_handle_err_message;
 		g_dblib_ctx.tds_ctx->int_handler = _dblib_check_and_handle_interrupt;
 
-		if (g_dblib_ctx.tds_ctx->locale && !g_dblib_ctx.tds_ctx->locale->date_fmt) {
+		if (g_dblib_ctx.tds_ctx->locale && !g_dblib_ctx.tds_ctx->locale->datetime_fmt) {
 			/* set default in case there's no locale file */
-			const static char date_format[] = "%b %e %Y %l:%M:%S:%z%p";
-			g_dblib_ctx.tds_ctx->locale->date_fmt = strdup(date_format);
+			const static char datetime_format[] = "%b %e %Y %l:%M:%S:%z%p";
+			g_dblib_ctx.tds_ctx->locale->datetime_fmt = strdup(datetime_format);
 		}
 	}
 	tds_mutex_unlock(&dblib_mutex);
@@ -3116,6 +3116,7 @@ dblib_coltype(TDSCOLUMN *colinfo)
 	case SYBMONEYN:
 	case SYBTIMEN:
 	case SYBUINTN:
+	case SYBMSTABLE:
 		break;
 	/* these types are supported */
 	case SYBCHAR:
@@ -3489,6 +3490,8 @@ dbvarylen(DBPROCESS * dbproc, int column)
 	case SYBMSUDT:
 	case SYBMSXML:
 		return TRUE;
+	case SYBMSTABLE:
+		return TRUE;
 
 	case SYBLONGCHAR:
 	/* case XSYBCHAR: */ /* same as SYBLONGCHAR */
@@ -3839,6 +3842,8 @@ dbprrow(DBPROCESS * dbproc)
 				putchar(c);
 			}
 
+		} else if (col_printlens == NULL) {
+			return FAIL;
 		} else {
 
 			computeid = status;
@@ -6625,7 +6630,7 @@ RETCODE
 dbsafestr(DBPROCESS * dbproc, const char *src, DBINT srclen, char *dest, DBINT destlen, int quotetype)
 {
 	int i, j = 0;
-	int squote = FALSE, dquote = FALSE;
+	bool squote = false, dquote = false;
 
 	tdsdump_log(TDS_DBG_FUNC, "dbsafestr(%p, %s, %d, %s, %d, %d)\n", dbproc, src, srclen, dest, destlen, quotetype);
 	CHECK_NULP(src, "dbsafestr", 2, FAIL);
@@ -6639,9 +6644,9 @@ dbsafestr(DBPROCESS * dbproc, const char *src, DBINT srclen, char *dest, DBINT d
 		srclen = (int)strlen(src);
 
 	if (quotetype == DBSINGLE || quotetype == DBBOTH)
-		squote = TRUE;
+		squote = true;
 	if (quotetype == DBDOUBLE || quotetype == DBBOTH)
-		dquote = TRUE;
+		dquote = true;
 
 	/* return FAIL if invalid quotetype */
 	if (!dquote && !squote)
@@ -7647,6 +7652,7 @@ tds_prdatatype(int datatype_token)
 	case SYBUINTN:		return "SYBUINTN";
 	case SYBUNITEXT:	return "SYBUNITEXT";
 	case SYBXML:		return "SYBXML";
+	case SYBMSTABLE:	return "SYBMSTABLE";
 	}
 	return "(unknown)";
 }

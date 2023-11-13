@@ -729,10 +729,10 @@ tds_generic_get(TDSSOCKET * tds, TDSCOLUMN * curcol)
 		if (len == 16) {	/*  Jeff's hack */
 			tds_get_n(tds, blob->textptr, 16);
 			tds_get_n(tds, blob->timestamp, 8);
-			blob->valid_ptr = 1;
+			blob->valid_ptr = true;
 			if (IS_TDS72_PLUS(tds->conn) &&
 			    memcmp(blob->textptr, "dummy textptr\0\0",16) == 0)
-				blob->valid_ptr = 0;
+				blob->valid_ptr = false;
 			colsize = tds_get_int(tds);
 		} else {
 			colsize = -1;
@@ -1008,7 +1008,7 @@ tds_generic_put(TDSSOCKET * tds, TDSCOLUMN * curcol, int bcp7)
 			/* this difference for BCP operation is due to
 			 * a bug in different server version that does
 			 * not accept a length here */
-			tds_put_int8(tds, bcp7 ? -2 : colsize);
+			tds_put_int8(tds, bcp7 ? (TDS_INT8) -2 : (TDS_INT8) colsize);
 			tds_put_int(tds, colsize);
 			break;
 		case 4:	/* It's a BLOB... */
@@ -1477,6 +1477,107 @@ tds_sybbigtime_put(TDSSOCKET *tds, TDSCOLUMN *col, int bcp7)
 }
 
 TDSRET
+tds_mstabletype_get_info(TDSSOCKET *tds, TDSCOLUMN *col)
+{
+	/* Table type is strictly only an input variable */
+	return TDS_FAIL;
+}
+
+TDS_INT
+tds_mstabletype_row_len(TDSCOLUMN *col)
+{
+	return sizeof(TDS_TVP);
+}
+
+TDSRET
+tds_mstabletype_get(TDSSOCKET *tds, TDSCOLUMN *col)
+{
+	/* Table type is strictly only an input variable */
+	return TDS_FAIL;
+}
+
+TDSRET
+tds_mstabletype_put_info(TDSSOCKET *tds, TDSCOLUMN *col)
+{
+	TDS_TVP *table = (TDS_TVP *) col->column_data;
+	TDSFREEZE current_freeze[1];
+	size_t written;
+
+	/* TVP_TYPENAME */
+	tds_put_byte(tds, 0); /* Empty DB name */
+
+	tds_freeze(tds, current_freeze, 1);
+	tds_put_string(tds, table->schema, -1);
+	written = tds_freeze_written(current_freeze) / 2;
+	tds_freeze_close_len(current_freeze, written);
+
+	tds_freeze(tds, current_freeze, 1);
+	tds_put_string(tds, table->name, -1);
+	written = tds_freeze_written(current_freeze) / 2;
+	tds_freeze_close_len(current_freeze, written);
+
+	return TDS_SUCCESS;
+}
+
+TDSRET
+tds_mstabletype_put(TDSSOCKET *tds, TDSCOLUMN *col, int bcp7)
+{
+	TDS_TVP *table = (TDS_TVP *) col->column_data;
+	TDSPARAMINFO *params;
+	TDSCOLUMN *tds_col;
+	TDS_TVP_ROW *row;
+	TDSRET ret;
+	int i;
+	TDS_USMALLINT num_cols = table->metadata ? table->metadata->num_cols : 0;
+
+	/* COL_METADATA */
+	if (num_cols == 0)
+		tds_put_smallint(tds, 0xffff); /* TVP_NULL_TOKEN */
+	else {
+		tds_put_smallint(tds, num_cols);
+
+		params = table->metadata;
+		for (i = 0; i < num_cols; i++) {
+			tds_col = params->columns[i];
+
+			/* UserType*/
+			tds_put_int(tds, tds_col->column_usertype);
+			/* Flags */
+			tds_put_smallint(tds, tds_col->column_flags);
+			/* TYPE_INFO */
+			tds_put_byte(tds, tds_col->on_server.column_type);
+			ret = tds_col->funcs->put_info(tds, tds_col);
+			if (TDS_FAILED(ret))
+				return ret;
+
+			/* ColName - Empty string */
+			tds_put_byte(tds, 0x00);
+		}
+	}
+
+	/* TVP_END_TOKEN */
+	tds_put_byte(tds, 0x00);
+
+	for (row = table->row; row != NULL; row = row->next) {
+		/* TVP_ROW_TOKEN */
+		tds_put_byte(tds, 0x01);
+
+		params = row->params;
+		for (i = 0; i < num_cols; i++) {
+			tds_col = params->columns[i];
+			ret = tds_col->funcs->put_data(tds, tds_col, 0);
+			if (TDS_FAILED(ret))
+				return ret;
+		}
+	}
+
+	/* TVP_END_TOKEN */
+	tds_put_byte(tds, 0x00);
+
+	return TDS_SUCCESS;
+}
+
+TDSRET
 tds_invalid_get_info(TDSSOCKET * tds, TDSCOLUMN * col)
 {
 	return TDS_FAIL;
@@ -1528,6 +1629,12 @@ tds_sybbigtime_check(const TDSCOLUMN *col)
 	assert(col->column_scale == col->column_prec);
 
 	return 1;
+}
+
+int
+tds_mstabletype_check(const TDSCOLUMN *col)
+{
+	return 0;
 }
 
 int
@@ -1598,6 +1705,7 @@ TDS_DECLARE_FUNCS(msdatetime);
 TDS_DECLARE_FUNCS(clrudt);
 TDS_DECLARE_FUNCS(sybbigtime);
 TDS_DECLARE_FUNCS(invalid);
+TDS_DECLARE_FUNCS(mstabletype);
 #include <freetds/popvis.h>
 
 static const TDSCOLUMNFUNCS *
@@ -1621,6 +1729,8 @@ tds_get_column_funcs(TDSCONNECTION *conn, int type)
 	case SYB5BIGTIME:
 	case SYB5BIGDATETIME:
 		return &tds_sybbigtime_funcs;
+	case SYBMSTABLE:
+		return &tds_mstabletype_funcs;
 	}
 	return &tds_generic_funcs;
 }

@@ -1,4 +1,23 @@
-$Id: b4e6442475cd841716ce9526482ecf7d0e30f471 $
+$Id$
+
+Summary of Changes in release 1.4
+--------------------------------------------
+User visible (not in a particular order):
+- Fix some numeric conversion checks;
+- Always use Unicode for SSPI allowing not ASCII to work;
+- Improve BCP copy, especially for Sybase;
+- Better error reporting for ICONV failures;
+- Disable TLSv1 by default;
+- ODBC: partial TVP support (missing data at execution);
+- ODBC: support for quoted string in connection string;
+- CT-Library: support large identifiers;
+- CT-Library: report appropriate severity values;
+- apps: datacopy report errors on standard error;
+- pool: use poll instead of select to support more connections.
+
+Implementation:
+- Use more bool type for boolean instead of integer;
+- more macros for ODBC tests to encapsulate some ODBC API.
 
 Summary of Changes in release 1.3
 --------------------------------------------

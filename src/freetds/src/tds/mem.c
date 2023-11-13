@@ -343,15 +343,24 @@ tds_free_param_result(TDSPARAMINFO * param_info)
 }
 
 static void
+tds_free_tvp_row(TDS_TVP_ROW *row)
+{
+	tds_free_param_results(row->params);
+}
+
+static void
 tds_param_free(TDSCOLUMN *col)
 {
 	if (!col->column_data)
 		return;
 
-	if (is_blob_col(col)) {
+	if (col->column_type == SYBMSTABLE) {
+		tds_deinit_tvp((TDS_TVP *) col->column_data);
+	} else if (is_blob_col(col)) {
 		TDSBLOB *blob = (TDSBLOB *) col->column_data;
 		free(blob->textvalue);
 	}
+
 	TDS_ZERO_FREE(col->column_data);
 }
 
@@ -380,8 +389,8 @@ tds_alloc_param_data(TDSCOLUMN * curparam)
 	if (!data)
 		return NULL;
 	/* if is a blob reset buffer */
-	if (is_blob_col(curparam))
-		memset(data, 0, sizeof(TDSBLOB));
+	if (is_blob_col(curparam) || curparam->column_type == SYBMSTABLE)
+		memset(data, 0, data_size);
 
 	return data;
 }
@@ -1018,7 +1027,6 @@ tds_alloc_login(int use_environment)
 	login->capabilities = defaultcaps;
 	login->use_ntlmv2_specified = 0;
 	login->use_ntlmv2 = 1;
-	login->enable_tls_v1 = 1;
 
 Cleanup:
 	return login;
@@ -1135,6 +1143,8 @@ tds_init_connection(TDSCONNECTION *conn, TDSCONTEXT *context, unsigned int bufsi
 	conn->s = INVALID_SOCKET;
 	conn->use_iconv = 1;
 	conn->tds_ctx = context;
+	conn->ncharsize = 1;
+	conn->unicharsize = 1;
 
 	if (tds_wakeup_init(&conn->wakeup))
 		goto Cleanup;
@@ -1449,7 +1459,9 @@ tds_free_locale(TDSLOCALE * locale)
 
 	free(locale->language);
 	free(locale->server_charset);
+	free(locale->datetime_fmt);
 	free(locale->date_fmt);
+	free(locale->time_fmt);
 	free(locale);
 }
 
@@ -1855,6 +1867,8 @@ tds_deinit_bcpinfo(TDSBCPINFO *bcpinfo)
 	TDS_ZERO_FREE(bcpinfo->insert_stmt);
 	tds_free_results(bcpinfo->bindinfo);
 	bcpinfo->bindinfo = NULL;
+	TDS_ZERO_FREE(bcpinfo->sybase_colinfo);
+	bcpinfo->sybase_count = 0;
 }
 
 void
@@ -1892,6 +1906,25 @@ tds_realloc(void **pp, size_t new_size)
 		*pp = p;
 
 	return p;
+}
+
+void
+tds_deinit_tvp(TDS_TVP *table)
+{
+	TDS_TVP_ROW *tvp_row, *next_row;
+
+	free(table->schema);
+	table->schema = NULL;
+	free(table->name);
+	table->name = NULL;
+	tds_free_param_results(table->metadata);
+	table->metadata = NULL;
+	for (tvp_row = table->row; tvp_row != NULL; tvp_row = next_row) {
+		next_row = tvp_row->next;
+		tds_free_tvp_row(tvp_row);
+		free(tvp_row);
+	}
+	table->row = NULL;
 }
 
 /** @} */

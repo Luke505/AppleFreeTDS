@@ -275,8 +275,8 @@ odbc_connect(void)
 		char *params;
 		SQLSMALLINT len;
 
-		asprintf(&params, "DSN=%s;UID=%s;PWD=%s;DATABASE=%s;%s",
-			 odbc_server, odbc_user, odbc_password, odbc_database, odbc_conn_additional_params);
+		assert(asprintf(&params, "DSN=%s;UID=%s;PWD=%s;DATABASE=%s;%s",
+				odbc_server, odbc_user, odbc_password, odbc_database, odbc_conn_additional_params) >= 0);
 		assert(params);
 		CHKDriverConnect(NULL, T(params), SQL_NTS, (SQLTCHAR *) command, sizeof(command)/sizeof(SQLTCHAR),
 				 &len, SQL_DRIVER_NOPROMPT, "SI");
@@ -337,7 +337,7 @@ odbc_command_with_result(HSTMT stmt, const char *command)
 }
 
 static int ms_db = -1;
-int
+bool
 odbc_db_is_microsoft(void)
 {
 	ODBC_BUF *odbc_buf = NULL;
@@ -353,10 +353,10 @@ odbc_db_is_microsoft(void)
 		ms_db = (strstr(C(buf), "microsoft") != NULL);
 	}
 	ODBC_FREE();
-	return ms_db;
+	return !!ms_db;
 }
 
-int
+bool
 odbc_driver_is_freetds(void)
 {
 	ODBC_BUF *odbc_buf = NULL;
@@ -372,7 +372,7 @@ odbc_driver_is_freetds(void)
 		freetds_driver = (strstr(C(buf), "tds") != NULL);
 	}
 	ODBC_FREE();
-	return freetds_driver;
+	return !!freetds_driver;
 }
 
 /* Detect protocol version using queries
@@ -483,7 +483,7 @@ const char *odbc_db_version(void)
 		SQLTCHAR buf[32];
 		SQLSMALLINT version_len;
 
-		CHKR(SQLGetInfo, (odbc_conn, SQL_DBMS_VER, buf, sizeof(buf), &version_len), "S");
+		CHKGetInfo(SQL_DBMS_VER, buf, sizeof(buf), &version_len, "S");
 		strcpy(db_str_version, C(buf));
 		ODBC_FREE();
 	}
@@ -757,7 +757,7 @@ odbc_buf_asprintf(ODBC_BUF** buf, const char *fmt, ...)
 	char *ret = NULL;
 
 	va_start(ap, fmt);
-	vasprintf(&ret, fmt, ap);
+	assert(vasprintf(&ret, fmt, ap) >= 0);
 	va_end(ap);
 
 	return (char *) odbc_buf_add(buf, ret);

@@ -44,6 +44,7 @@
 #include <freetds/tds.h>
 #include <freetds/bytes.h>
 #include <freetds/iconv.h>
+#include <freetds/bool.h>
 #include <freetds/utils/bjoern-utf8.h>
 
 #include "iconv_charsets.h"
@@ -348,10 +349,10 @@ tds_sys_iconv_open (const char* tocode, const char* fromcode)
 	const char *enc_name;
 	unsigned char encodings[2];
 
-	static char first_time = 1;
+	static bool first_time = true;
 
 	if (TDS_UNLIKELY(first_time)) {
-		first_time = 0;
+		first_time = false;
 		tdsdump_log(TDS_DBG_INFO1, "Using trivial iconv\n");
 	}
 
@@ -392,7 +393,7 @@ tds_sys_iconv_open (const char* tocode, const char* fromcode)
 		fromto = Like_to_Like;
 	}
 
-	return (iconv_t) (intptr_t) fromto;
+	return (iconv_t) (TDS_INTPTR) fromto;
 } 
 
 int 
@@ -410,7 +411,7 @@ tds_sys_iconv (iconv_t cd, const char* * inbuf, size_t *inbytesleft, char* * out
 	int local_errno;
 
 #undef CD
-#define CD ((int) (intptr_t) cd)
+#define CD ((int) (TDS_INTPTR) cd)
 
 	/* iconv defines valid semantics for NULL inputs, but we don't support them. */
 	if (!inbuf || !*inbuf || !inbytesleft || !outbuf || !*outbuf || !outbytesleft)

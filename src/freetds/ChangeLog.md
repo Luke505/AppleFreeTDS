@@ -1,4 +1,4 @@
-# Change Log - FreeTDS v1.3.19
+# Change Log - FreeTDS v1.4.6
 
 ## Features
 

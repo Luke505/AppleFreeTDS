@@ -1,3 +1,5 @@
+#undef NDEBUG
+
 #ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS 1
 #include <freetds/windows.h>
@@ -28,6 +30,7 @@
 #include <freetds/sysdep_private.h>
 #include <freetds/macros.h>
 #include <freetds/replacements.h>
+#include <freetds/bool.h>
 
 #ifndef HAVE_SQLLEN
 #ifndef SQLULEN
@@ -166,7 +169,11 @@ SQLSMALLINT odbc_alloc_handle_err_type(SQLSMALLINT type);
 #define CHKGetDescRec(a,b,c,d,e,f,g,h,i,j,res) \
 	CHKR2(SQLGetDescRec, (Descriptor,a,b,c,d,e,f,g,h,i,j), SQL_HANDLE_STMT, Descriptor, res)
 #define CHKGetDescField(desc,a,b,c,d,e,res) \
-        CHKR2(SQLGetDescField, ((desc),a,b,c,d,e), SQL_HANDLE_DESC, (desc), res)
+	CHKR2(SQLGetDescField, ((desc),a,b,c,d,e), SQL_HANDLE_DESC, (desc), res)
+#define CHKSetDescField(desc,a,b,c,d,res) \
+	CHKR2(SQLSetDescField, ((desc),a,b,c,d), SQL_HANDLE_DESC, (desc), res)
+#define CHKGetInfo(a,b,c,d,res) \
+	CHKR2(SQLGetInfo, (odbc_conn,a,b,c,d), SQL_HANDLE_DBC, odbc_conn, res)
 
 int odbc_connect(void);
 int odbc_disconnect(void);
@@ -174,10 +181,10 @@ SQLRETURN odbc_command_proc(HSTMT stmt, const char *command, const char *file, i
 #define odbc_command(cmd) odbc_command_proc(odbc_stmt, cmd, __FILE__, __LINE__, "SNo")
 #define odbc_command2(cmd, res) odbc_command_proc(odbc_stmt, cmd, __FILE__, __LINE__, res)
 SQLRETURN odbc_command_with_result(HSTMT stmt, const char *command);
-int odbc_db_is_microsoft(void);
+bool odbc_db_is_microsoft(void);
 const char *odbc_db_version(void);
 unsigned int odbc_db_version_int(void);
-int odbc_driver_is_freetds(void);
+bool odbc_driver_is_freetds(void);
 int odbc_tds_version(void);
 
 void odbc_mark_sockets_opened(void);

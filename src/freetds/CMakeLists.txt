@@ -7,6 +7,7 @@ option(ENABLE_ODBC_WIDE    "Enable ODBC wide character support" ON)
 option(ENABLE_KRB5         "Enable Kerberos support" OFF)
 option(ENABLE_ODBC_MARS    "Enable MARS" OFF)
 option(ENABLE_EXTRA_CHECKS "Enable internal extra checks, DO NOT USE in production" OFF)
+option(ENABLE_MSDBLIB      "Enable MS style dblib" OFF)
 
 if(COMMAND cmake_policy)
 	cmake_policy(SET CMP0003 NEW)
@@ -59,7 +60,7 @@ endif()
 # get build number from date
 # use same formula used in configure.ac
 unset(BUILD_NUMBER)
-string(TIMESTAMP BUILD_NUMBER "( %Y - 2021 ) * 366 + 1%j - 1000")
+string(TIMESTAMP BUILD_NUMBER "( %Y - 2023 ) * 366 + 1%j - 1000")
 math(EXPR BUILD_NUMBER "${BUILD_NUMBER}")
 
 set(FREETDS_TOPDIR ${CMAKE_CURRENT_LIST_DIR})
@@ -263,7 +264,7 @@ set(FUNCS asprintf vasprintf strtok_r strtok_s readpassphrase
 	getaddrinfo inet_ntop gethostname poll socketpair
 	clock_gettime fseeko pthread_cond_timedwait pthread_cond_timedwait_relative_np
 	pthread_condattr_setclock _lock_file _unlock_file usleep nanosleep
-	readdir_r eventfd daemon system)
+	readdir_r eventfd daemon system mallinfo mallinfo2 _heapwalk)
 
 # TODO
 set(HAVE_GETADDRINFO 1 CACHE INTERNAL "")
@@ -345,6 +346,12 @@ endif()
 foreach(flag ODBC_WIDE EXTRA_CHECKS KRB5 ODBC_MARS)
 	config_write("#cmakedefine ENABLE_${flag} 1\n\n")
 endforeach(flag)
+
+if (ENABLE_MSDBLIB)
+	set(dblib_define "#define MSDBLIB 1")
+else()
+	set(dblib_define "#define SYBDBLIB 1")
+endif()
 
 config_write("#define VERSION \"\\@VERSION\\@\"\n\n")
 
@@ -465,6 +472,7 @@ add_subdirectory(src/pool)
 
 configure_file(${CMAKE_BINARY_DIR}/include/config.h.in ${CMAKE_BINARY_DIR}/include/config.h)
 configure_file(${CMAKE_SOURCE_DIR}/include/tds_sysdep_public.h.in ${CMAKE_BINARY_DIR}/include/tds_sysdep_public.h)
+configure_file(${CMAKE_SOURCE_DIR}/include/freetds/sysdep_types.h.in ${CMAKE_BINARY_DIR}/include/freetds/sysdep_types.h)
 configure_file(${CMAKE_SOURCE_DIR}/include/freetds/version.h.in ${CMAKE_BINARY_DIR}/include/freetds/version.h)
 if(NOT EXISTS "${CMAKE_SOURCE_DIR}/configure")
 	configure_file(${CMAKE_SOURCE_DIR}/src/odbc/version.rc.in ${CMAKE_SOURCE_DIR}/src/odbc/version.rc)

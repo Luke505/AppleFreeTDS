@@ -149,6 +149,97 @@ _odbc_blob_free(TDSCOLUMN *col)
         TDS_ZERO_FREE(col->column_data);
 }
 
+static SQLRETURN
+odbc_convert_table(TDS_STMT *stmt, SQLTVP *src, TDS_TVP *dest, SQLLEN num_rows)
+{
+	SQLLEN i;
+	int j;
+	TDS_TVP_ROW *row;
+	TDS_TVP_ROW **prow;
+	TDSPARAMINFO *params, *new_params;
+	TDS_DESC *apd = src->apd, *ipd = src->ipd;
+	SQLRETURN ret;
+	char *type_name, *pch;
+
+	/* probably data at execution attempt, currently not supported for TVP */
+	if (num_rows < 0) {
+		odbc_errs_add(&stmt->errs, "HYC00", "Data at execution are not supported for TVP columns");
+		return SQL_ERROR;
+	}
+
+	tds_deinit_tvp(dest);
+
+	type_name = strdup(tds_dstr_cstr(&src->type_name));
+	if (!type_name)
+		goto Memory_Error;
+
+	/* Tokenize and extract the schema & TVP typename from the TVP's full name */
+	pch = strchr(type_name, '.');
+	if (pch == NULL) {
+		dest->schema = tds_strndup("", 0);
+		dest->name = type_name;
+	} else {
+		*pch = 0;
+		dest->schema = type_name;
+		dest->name = strdup(++pch);
+	}
+	if (!dest->schema || !dest->name)
+		goto Memory_Error;
+
+	/* Ensure that the TVP typename does not contain any more '.' */
+	/* Otherwise, report it as an invalid data type error */
+	pch = strchr(dest->name, '.');
+	if (pch != NULL) {
+		odbc_errs_add(&stmt->errs, "HY004", NULL);
+		return SQL_ERROR;
+	}
+
+	params = NULL;
+	for (j = 0; j < ipd->header.sql_desc_count; j++) {
+		if (!(new_params = tds_alloc_param_result(params))) {
+			tds_free_param_results(params);
+			goto Memory_Error;
+		}
+		params = new_params;
+
+		ret = odbc_sql2tds(stmt, &ipd->records[j], &apd->records[j], new_params->columns[j], false, apd, 0);
+		if (!SQL_SUCCEEDED(ret)) {
+			tds_free_param_results(params);
+			return ret;
+		}
+	}
+	dest->metadata = params;
+
+	for (i = 0, prow = &dest->row; i < num_rows; prow = &(*prow)->next, i++) {
+		if ((row = tds_new0(TDS_TVP_ROW, 1)) == NULL)
+			goto Memory_Error;
+
+		*prow = row;
+
+		params = NULL;
+		for (j = 0; j < ipd->header.sql_desc_count; j++) {
+			if (!(new_params = tds_alloc_param_result(params))) {
+				tds_free_param_results(params);
+				goto Memory_Error;
+			}
+			params = new_params;
+
+			ret = odbc_sql2tds(stmt, &ipd->records[j], &apd->records[j], new_params->columns[j], true, apd, i);
+			if (!SQL_SUCCEEDED(ret)) {
+				tds_free_param_results(params);
+				return ret;
+			}
+		}
+		row->params = params;
+	}
+
+	return SQL_SUCCESS;
+
+Memory_Error:
+	odbc_errs_add(&stmt->errs, "HY001", NULL);
+	return SQL_ERROR;
+}
+
 /**
  * Convert parameters to libtds format
  * @param stmt        ODBC statement
@@ -166,8 +257,8 @@ odbc_sql2tds(TDS_STMT * stmt, const struct _drecord *drec_ixd, const struct _dre
 {
 	TDS_DBC * dbc = stmt->dbc;
 	TDSCONNECTION * conn = dbc->tds_socket->conn;
-	TDS_SERVER_TYPE dest_type;
-	int src_type, sql_src_type, res;
+	TDS_SERVER_TYPE dest_type, src_type;
+	int sql_src_type, res;
 	CONV_RESULT ores;
 	TDSBLOB *blob;
 	char *src, *converted_src;
@@ -237,6 +328,10 @@ odbc_sql2tds(TDS_STMT * stmt, const struct _drecord *drec_ixd, const struct _dre
 		if (dest_type != SYBUNIQUE && !is_fixed_type(dest_type)) {
 			curcol->column_cur_size = 0;
 			curcol->column_size = drec_ixd->sql_desc_length;
+			/* Ensure that the column_cur_size and column_size are consistent, */
+			/* since drec_ixd->sql_desc_length contains the number of rows for a TVP */
+			if (dest_type == SYBMSTABLE)
+				curcol->column_size = sizeof(TDS_TVP);
 			if (curcol->column_size < 0) {
 				curcol->on_server.column_size = curcol->column_size = 0x7FFFFFFFl;
 			} else {
@@ -416,12 +511,16 @@ odbc_sql2tds(TDS_STMT * stmt, const struct _drecord *drec_ixd, const struct _dre
 		src = (char *) &num;
 		break;
 		/* TODO intervals */
+	default:
+		/* prevents some compiler warnings about missing cases */
+		break;
 	}
 
 	converted_src = NULL;
 	if (sql_src_type == SQL_C_WCHAR) {
 		converted_src = src = odbc_wstr2str(stmt, src, &len);
 		if (!src)
+			/* TODO add proper error */
 			return SQL_ERROR;
 		src_type = SYBVARCHAR;
 	}
@@ -496,6 +595,12 @@ odbc_sql2tds(TDS_STMT * stmt, const struct _drecord *drec_ixd, const struct _dre
 	case SYB5BIGDATETIME:
 		res = tds_convert(dbc->env->tds_ctx, src_type, src, len, dest_type, (CONV_RESULT*) dest);
 		break;
+	case SYBMSTABLE:
+		free(converted_src);
+		src = drec_ixd->sql_desc_data_ptr;
+		curcol->column_cur_size = sizeof(TDS_TVP);
+		return odbc_convert_table(stmt, (SQLTVP *) src, (TDS_TVP *) dest,
+					  drec_axd->sql_desc_octet_length_ptr == NULL ? 1 : *drec_axd->sql_desc_octet_length_ptr);
 	default:
 	case SYBVOID:
 	case SYBVARIANT:

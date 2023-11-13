@@ -911,7 +911,7 @@ tds_convert_numeric(const TDS_NUMERIC * src, int desttype, CONV_RESULT * cr)
 		i = TDS_GET_UA2BE(&(cr->n.array[2]));
 		if (cr->n.array[0])
 			i = -i;
-		if (((i >> 15) ^ cr->n.array[0]) & 1)
+		if (i != 0 && ((i >> 15) ^ cr->n.array[0]) & 1)
 			return TDS_CONVERT_OVERFLOW;
 		cr->si = (TDS_SMALLINT) i;
 		return sizeof(TDS_SMALLINT);
@@ -921,9 +921,9 @@ tds_convert_numeric(const TDS_NUMERIC * src, int desttype, CONV_RESULT * cr)
 		ret = tds_numeric_change_prec_scale(&(cr->n), 5, 0);
 		if (ret < 0)
 			return ret;
-		if (cr->n.array[0] || cr->n.array[1])
-			return TDS_CONVERT_OVERFLOW;
 		i = TDS_GET_UA2BE(&(cr->n.array[2]));
+		if ((i != 0 && cr->n.array[0]) || cr->n.array[1])
+			return TDS_CONVERT_OVERFLOW;
 		cr->usi = (TDS_USMALLINT) i;
 		return sizeof(TDS_USMALLINT);
 		break;
@@ -937,7 +937,7 @@ tds_convert_numeric(const TDS_NUMERIC * src, int desttype, CONV_RESULT * cr)
 		i = TDS_GET_UA4BE(&(cr->n.array[2]));
 		if (cr->n.array[0])
 			i = -i;
-		if (((i >> 31) ^ cr->n.array[0]) & 1)
+		if (i != 0 && ((i >> 31) ^ cr->n.array[0]) & 1)
 			return TDS_CONVERT_OVERFLOW;
 		cr->i = i;
 		return sizeof(TDS_INT);
@@ -947,9 +947,9 @@ tds_convert_numeric(const TDS_NUMERIC * src, int desttype, CONV_RESULT * cr)
 		ret = tds_numeric_change_prec_scale(&(cr->n), 10, 0);
 		if (ret < 0)
 			return ret;
-		if (cr->n.array[0] || cr->n.array[1])
-			return TDS_CONVERT_OVERFLOW;
 		i = TDS_GET_UA4BE(&(cr->n.array[2]));
+		if ((i != 0 && cr->n.array[0]) || cr->n.array[1])
+			return TDS_CONVERT_OVERFLOW;
 		cr->ui = i;
 		return sizeof(TDS_UINT);
 		break;
@@ -964,7 +964,7 @@ tds_convert_numeric(const TDS_NUMERIC * src, int desttype, CONV_RESULT * cr)
 		bi = (bi << 32) + TDS_GET_UA4BE(&(cr->n.array[6]));
 		if (cr->n.array[0])
 			bi = -bi;
-		if (((bi >> 63) ^ cr->n.array[0]) & 1)
+		if (bi != 0 && ((bi >> 63) ^ cr->n.array[0]) & 1)
 			return TDS_CONVERT_OVERFLOW;
 		cr->bi = bi;
 		return sizeof(TDS_INT8);
@@ -974,10 +974,10 @@ tds_convert_numeric(const TDS_NUMERIC * src, int desttype, CONV_RESULT * cr)
 		ret = tds_numeric_change_prec_scale(&(cr->n), 20, 0);
 		if (ret < 0)
 			return ret;
-		if (cr->n.array[0] || cr->n.array[1])
-			return TDS_CONVERT_OVERFLOW;
 		bi = TDS_GET_UA4BE(&(cr->n.array[2]));
 		bi = (bi << 32) + TDS_GET_UA4BE(&(cr->n.array[6]));
+		if ((bi != 0 && cr->n.array[0]) || cr->n.array[1])
+			return TDS_CONVERT_OVERFLOW;
 		cr->ubi = bi;
 		return sizeof(TDS_UINT8);
 		break;
@@ -1001,7 +1001,7 @@ tds_convert_numeric(const TDS_NUMERIC * src, int desttype, CONV_RESULT * cr)
 		i = TDS_GET_UA4BE(&(cr->n.array[2]));
 		if (cr->n.array[0])
 			i = -i;
-		if (((i >> 31) ^ cr->n.array[0]) & 1)
+		if (i != 0 && ((i >> 31) ^ cr->n.array[0]) & 1)
 			return TDS_CONVERT_OVERFLOW;
 		cr->m4.mny4 = i;
 		return sizeof(TDS_MONEY4);
@@ -1017,7 +1017,7 @@ tds_convert_numeric(const TDS_NUMERIC * src, int desttype, CONV_RESULT * cr)
 		bi = (bi << 32) + TDS_GET_UA4BE(&(cr->n.array[6]));
 		if (cr->n.array[0])
 			bi = -bi;
-		if (((bi >> 63) ^ cr->n.array[0]) & 1)
+		if (bi != 0 && ((bi >> 63) ^ cr->n.array[0]) & 1)
 			return TDS_CONVERT_OVERFLOW;
 		cr->m.mny = bi;
 		return sizeof(TDS_MONEY);
@@ -1279,13 +1279,19 @@ static TDS_INT
 tds_convert_datetimeall(const TDSCONTEXT * tds_ctx, int srctype, const TDS_DATETIMEALL * dta, int desttype, CONV_RESULT * cr)
 {
 	char whole_date_string[64];
+	const char *datetime_fmt;
 	TDSDATEREC when;
 
 	switch (desttype) {
 	case TDS_CONVERT_CHAR:
 	case CASE_ALL_CHAR:
 		tds_datecrack(srctype, dta, &when);
-		tds_strftime(whole_date_string, sizeof(whole_date_string), tds_ctx->locale->date_fmt, &when, 
+		datetime_fmt = tds_ctx->locale->datetime_fmt;
+		if (srctype == SYBMSDATE && tds_ctx->locale->date_fmt)
+			datetime_fmt = tds_ctx->locale->date_fmt;
+		if (srctype == SYBMSTIME && tds_ctx->locale->time_fmt)
+			datetime_fmt = tds_ctx->locale->time_fmt;
+		tds_strftime(whole_date_string, sizeof(whole_date_string), datetime_fmt, &when,
 		             dta->time_prec);
 
 		return string_to_result(desttype, whole_date_string, cr);
@@ -1350,7 +1356,7 @@ tds_convert_datetime(const TDSCONTEXT * tds_ctx, const TDS_DATETIME * dt, int de
 	case TDS_CONVERT_CHAR:
 	case CASE_ALL_CHAR:
 		tds_datecrack(SYBDATETIME, dt, &when);
-		tds_strftime(whole_date_string, sizeof(whole_date_string), tds_ctx->locale->date_fmt, &when, 3);
+		tds_strftime(whole_date_string, sizeof(whole_date_string), tds_ctx->locale->datetime_fmt, &when, 3);
 
 		return string_to_result(desttype, whole_date_string, cr);
 	case SYBDATETIME:
@@ -1434,33 +1440,37 @@ tds_convert_datetime4(const TDSCONTEXT * tds_ctx, const TDS_DATETIME4 * dt4, int
 static TDS_INT
 tds_convert_time(const TDSCONTEXT * tds_ctx, const TDS_TIME * time, int desttype, CONV_RESULT * cr)
 {
-	TDS_DATETIME dt;
+	TDS_DATETIMEALL dta;
 
 	if (desttype == SYBTIME) {
 		cr->time = *time;
 		return sizeof(TDS_TIME);
 	}
 
-	/* convert to DATETIME and use tds_convert_datetime */
-	dt.dtdays = 0;
-	dt.dttime = *time;
-	return tds_convert_datetime(tds_ctx, &dt, desttype, 0, cr);
+	/* convert to DATETIMEALL and use tds_convert_datetimeall */
+	memset(&dta, 0, sizeof(dta));
+	dta.has_time = 1;
+	dta.time_prec = 3;
+	dta.time = ((TDS_UINT8) *time * 100000 + 2) / 3;
+	dta.time = (((TDS_UINT8) *time) * 20 + 3) / 6 * 10000;
+	return tds_convert_datetimeall(tds_ctx, SYBMSTIME, &dta, desttype, cr);
 }
 
 static TDS_INT
 tds_convert_date(const TDSCONTEXT * tds_ctx, const TDS_DATE * date, int desttype, CONV_RESULT * cr)
 {
-	TDS_DATETIME dt;
+	TDS_DATETIMEALL dta;
 
 	if (desttype == SYBDATE) {
 		cr->date = *date;
 		return sizeof(TDS_DATE);
 	}
 
-	/* convert to DATETIME and use tds_convert_datetime */
-	dt.dtdays = *date;
-	dt.dttime = 0;
-	return tds_convert_datetime(tds_ctx, &dt, desttype, 0, cr);
+	/* convert to DATETIMEALL and use tds_convert_datetimeall */
+	memset(&dta, 0, sizeof(dta));
+	dta.has_date = 1;
+	dta.date = *date;
+	return tds_convert_datetimeall(tds_ctx, SYBMSDATE, &dta, desttype, cr);
 }
 
 static TDS_INT
@@ -1510,7 +1520,7 @@ tds_convert_real(const TDS_REAL* src, int desttype, CONV_RESULT * cr)
 {
 	TDS_REAL the_value;
 
-/* FIXME how many big should be this buffer ?? */
+	/* FIXME how big should be this buffer ?? */
 	char tmp_str[128];
 	TDS_INT mymoney4;
 	TDS_INT8 mymoney;
@@ -1895,7 +1905,7 @@ tds_convert(const TDSCONTEXT *tds_ctx, int srctype, const void *src, TDS_UINT sr
 	assert(srclen >= 0 && srclen <= 2147483647u);
 
 	if (srctype == SYBVARIANT) {
-		TDSVARIANT *v = (TDSVARIANT*) src;
+		const TDSVARIANT *v = (const TDSVARIANT*) src;
 		srctype = v->type;
 		src = v->data;
 		srclen = v->data_len;
@@ -1984,6 +1994,7 @@ tds_convert(const TDSCONTEXT *tds_ctx, int srctype, const void *src, TDS_UINT sr
 		break;
 	case SYBNVARCHAR:
 	case SYBNTEXT:
+	case SYBMSTABLE:
 	default:
 		return TDS_CONVERT_NOAVAIL;
 		break;
@@ -2995,7 +3006,7 @@ tds_strftime(char *buf, size_t maxsize, const char *format, const TDSDATEREC * d
 
 	size_t length;
 	char *our_format;
-	char *pz = NULL;
+	char *pz;
 	bool z_found = false;
 	
 	assert(buf);
@@ -3021,7 +3032,7 @@ tds_strftime(char *buf, size_t maxsize, const char *format, const TDSDATEREC * d
 #endif
 
 	/* more characters are required because we replace %z with up to 7 digits */
-	our_format = tds_new(char, strlen(format) + 1 + 5);
+	our_format = tds_new(char, strlen(format) + 1 + 5 + 1);
 	if (!our_format)
 		return 0;
 
@@ -3033,6 +3044,8 @@ tds_strftime(char *buf, size_t maxsize, const char *format, const TDSDATEREC * d
 
 		switch (*pz) {
 		case 0:
+			*pz++ = '%';
+			*pz = 0;
 			continue;
 		case '%':
 			/* escaped, do not treat as format on next iteration */

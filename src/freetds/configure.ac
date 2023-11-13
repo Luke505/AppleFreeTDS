@@ -11,10 +11,11 @@ dnl ------------------------------------------------------------
 # ------------------------------------------------------------
 # Initialization
 # ------------------------------------------------------------
-AC_INIT(FreeTDS, 1.3.19)
+AC_INIT(FreeTDS, 1.4.6)
 AC_CONFIG_SRCDIR(src/dblib/dblib.c)
 AC_PREREQ(2.53)
 
+AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([dist-bzip2 parallel-tests subdir-objects foreign])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES(yes)])
 AC_CONFIG_HEADERS(include/config.h)
@@ -40,7 +41,7 @@ fi
 MAJOR=[`echo $ver | sed "s,$match,\1,"`]
 MINOR=[`echo $ver | sed "s,$match,\2,"`]
 SUBVERSION=[`echo $ver | sed "s,$match,\3,"`]
-BUILD_NUMBER="`date +1%j` - 1000 + ( `date +%Y` - 2021 )"
+BUILD_NUMBER="`date +1%j` - 1000 + ( `date +%Y` - 2023 )"
 BUILD_NUMBER="`expr $BUILD_NUMBER \* 366`"
 if test "$SUBVERSION" = "9999"; then
 	MINOR=`expr $MINOR - 1`
@@ -90,11 +91,11 @@ case $host_os in
     ;;
 esac
 
-if test $netdb_reentrant = yes; then 
-    AC_DEFINE(NETDB_REENTRANT, 1, [Define to 1 if the BSD-style netdb interface is reentrant.])
+if test $netdb_reentrant = yes; then
+	AC_DEFINE(NETDB_REENTRANT, 1, [Define to 1 if the BSD-style netdb interface is reentrant.])
 fi
 
-AC_GNU_SOURCE
+AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 
 # ------------------------------------------------------------
@@ -112,17 +113,16 @@ define([AC_LIBTOOL_LANG_F77_CONFIG], [:])dnl
 define([AC_LIBTOOL_LANG_GCJ_CONFIG], [:])dnl
 
 LT_INIT([win32-dll])
-AC_LTDL_DLLIB
-LT_AC_PROG_RC
+LT_PROG_RC
 
 AC_ARG_ENABLE(libiconv,
 	AS_HELP_STRING([--disable-libiconv], [do not attempt to include libiconv]),
 	[use_libiconv=$enableval], [use_libiconv=yes])
-  
+
 if test "$use_libiconv" = "yes" ; then
 	AM_ICONV
-else 
-	AC_MSG_NOTICE(libiconv disabled)	
+else
+	AC_MSG_NOTICE(libiconv disabled)
 	AC_DEFINE_UNQUOTED(ICONV_CONST, const, [Define as const if the declaration of iconv() needs const.])
 fi
 
@@ -141,9 +141,9 @@ AC_CHECK_PROG(ODBC_CONFIG,odbc_config,odbc_config)
 # the bases are not in the tarball.  For example, num_limits.h
 # is distributed, but it is generated from numeric.pl, which
 # is kept in git.
-# If the base is found, we use it as a source in the Makefile, 
+# If the base is found, we use it as a source in the Makefile,
 # otherwise the Makefile will (correctly) assume that the
-# generated file is already present.  
+# generated file is already present.
 #
 if test -f "${srcdir}/src/tds/num_limits.pl"; then
 	AM_CONDITIONAL(HAVE_PERL_SOURCES, true)
@@ -159,7 +159,7 @@ AC_SUBST(HAVE_PERL_SOURCES)
 # Checks for libraries.
 # ------------------------------------------------------------
 AC_ARG_ENABLE(krb5,
-  AS_HELP_STRING([--enable-krb5@<:@=LIB@:>@], [enable Kerberos support, optionally with library]))
+	AS_HELP_STRING([--enable-krb5@<:@=LIB@:>@], [enable Kerberos support, optionally with library]))
 
 krb5_libs=auto
 case $enable_krb5 in
@@ -188,9 +188,9 @@ case $host in
 *-*-hpux*)
 	# these lines are needed to fix a problem for HP-UX
 	# HP-UX define two versions of sockets, one BSD and one X/Open
-	# these versions are not binary compatible (BSD use int where X/Open 
+	# these versions are not binary compatible (BSD use int where X/Open
 	# use socklen_t == size_t) and different libraries (BSD in libc and
-	# X/Open in libxnet). X/Open is used if _XOPEN_SOURCE and 
+	# X/Open in libxnet). X/Open is used if _XOPEN_SOURCE and
 	# _XOPEN_SOURCE_EXTENDED are defined. To complicate the things gcc
 	# by default define _XOPEN_SOURCE_EXTENDED so define always both
 	# constants and link always libxnet!
@@ -247,7 +247,7 @@ if test $tds_mingw = no; then
 	ACX_PUSH_LIBS("")
 	AC_SEARCH_LIBS(tgetent, [readline ncurses curses termcap])
 	AC_CHECK_LIB([readline], [readline], [LIBS="-lreadline $LIBS"
-	  AC_DEFINE(HAVE_READLINE, 1, [Define to 1 if you have the GNU Readline library.])], [LIBS=""] )
+		AC_DEFINE(HAVE_READLINE, 1, [Define to 1 if you have the GNU Readline library.])], [LIBS=""] )
 	AC_CHECK_FUNCS([rl_on_new_line rl_reset_line_state])
 	AC_LINK_IFELSE([AC_LANG_SOURCE([[
 
@@ -271,7 +271,7 @@ int main()
 	ACX_POP_LIBS
 	AC_SUBST(READLINE_LIBS)
 
-	ACX_PTHREAD
+	AX_PTHREAD
 	AM_CFLAGS="$AM_CFLAGS $PTHREAD_CFLAGS"
 	AC_SUBST(AM_CFLAGS)
 	LIBS="$PTHREAD_LIBS $LIBS"
@@ -281,7 +281,7 @@ fi
 
 # check for SSPI
 AC_ARG_ENABLE(sspi,
-  AS_HELP_STRING([--disable-sspi], [disable SSPI support]))
+	AS_HELP_STRING([--disable-sspi], [disable SSPI support]))
 # disable by default
 enable_sspi=${enable_sspi-yes}
 # only if MingW (TODO other compilers)
@@ -294,8 +294,6 @@ fi
 # ------------------------------------------------------------
 # Checks for header files.
 # ------------------------------------------------------------
-AC_HEADER_STDC
-AC_HEADER_TIME
 AC_STRUCT_TIMEZONE
 AC_CHECK_MEMBERS([struct tm.__tm_zone],,,[#include <sys/types.h>
 #include <$ac_cv_struct_tm>
@@ -319,7 +317,7 @@ AC_CHECK_HEADERS([windows.h sql.h odbcss.h],[],[],[[#ifdef HAVE_WINDOWS_H
 ]])
 AM_CONDITIONAL(HAVE_ODBCSS_H, test "$ac_cv_header_odbcss_h" = "yes")
 if test $tds_mingw = no; then
-    AC_CHECK_HEADERS([	arpa/inet.h \
+	AC_CHECK_HEADERS([arpa/inet.h \
 			langinfo.h \
 			netdb.h \
 			netinet/in.h \
@@ -343,6 +341,8 @@ AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long double)
 AC_CHECK_SIZEOF(long long)
+# This will define SIZEOF_LONG_INT, used by some ODBC Driver Manager
+AC_CHECK_SIZEOF(long int)
 AC_CHECK_SIZEOF(__int64)
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(wchar_t,,[$ac_includes_default
@@ -428,9 +428,9 @@ AC_EGREP_CPP(yes,
 TYPE_SOCKLEN_T
 
 AC_MSG_CHECKING([whether getopt has optreset support])
-AC_TRY_LINK([#ifdef HAVE_GETOPT_H
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_GETOPT_H
 #include <getopt.h>
-#endif], [optreset = 0;],
+#endif]], [[optreset = 0;]])],
 [AC_MSG_RESULT(yes)
 AC_DEFINE(HAVE_GETOPT_OPTRESET, 1, [Define if your getopt(3) defines and uses optreset])],
 [AC_MSG_RESULT(no)]
@@ -482,7 +482,7 @@ if test "$GCC" = yes; then
 		fi
 	done
 	AC_COMPILE_IFELSE([AC_LANG_SOURCE([static void __attribute__((destructor)) my_uninit(void) {}])],
-			  AC_DEFINE(TDS_ATTRIBUTE_DESTRUCTOR, 1, 
+			  AC_DEFINE(TDS_ATTRIBUTE_DESTRUCTOR, 1,
 				    [Define to 1 if your compiler supports __attribute__((destructor)).]))
 fi
 AC_SUBST(FREETDS_LIBGCC)
@@ -497,17 +497,18 @@ nl_langinfo locale_charset setenv putenv \
 getuid getpwuid getpwuid_r fstat alarm fork \
 gethrtime localtime_r setitimer eventfd \
 _fseeki64 _ftelli64 setrlimit pthread_cond_timedwait \
-_lock_file _unlock_file usleep nanosleep readdir_r])
+_lock_file _unlock_file usleep nanosleep readdir_r \
+mallinfo mallinfo2 _heapwalk])
 
-AC_TRY_LINK([#include <stdio.h>
-#include <stdlib.h>],
-[return system("ls") != 0;],
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdio.h>
+#include <stdlib.h>]],
+[[return system("ls") != 0;]])],
 AC_DEFINE(HAVE_SYSTEM, 1, [Define to 1 if you have the 'system' function]))
 
 ACX_PUSH_LIBS("$LIBS $NETWORK_LIBS")
 AC_CHECK_FUNCS([inet_ntoa_r getipnodebyaddr getipnodebyname \
 getaddrinfo inet_ntop gethostname poll socketpair strtok_s])
-AC_TRY_LINK([#ifdef HAVE_SYS_TYPES_H
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
@@ -519,8 +520,8 @@ AC_TRY_LINK([#ifdef HAVE_SYS_TYPES_H
 #ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#endif],
-[return getaddrinfo(NULL, NULL, NULL, NULL);],
+#endif]],
+[[return getaddrinfo(NULL, NULL, NULL, NULL);]])],
 AC_DEFINE(HAVE_GETADDRINFO, 1, [Define if you have getaddrinfo function]))
 ACX_POP_LIBS
 
@@ -556,7 +557,7 @@ case "$with_tdsver" in
 esac
 
 AC_ARG_WITH(iodbc,
-AS_HELP_STRING([--with-iodbc=DIR], [build odbc driver against iODBC in DIR]))
+AS_HELP_STRING([--with-iodbc=DIR], [build ODBC driver against iODBC in DIR]))
 
 if test "x$with_iodbc" = "xyes"; then
 	# The user asked for iodbc support, but didn't tell us
@@ -586,7 +587,7 @@ elif test "x$with_iodbc" != "x" -a "x$with_iodbc" != "xno"; then
 fi
 
 AC_ARG_WITH(unixodbc,
-AS_HELP_STRING([--with-unixodbc=DIR], [build odbc driver against unixODBC in DIR]))
+AS_HELP_STRING([--with-unixodbc=DIR], [build ODBC driver against unixODBC in DIR]))
 
 if test "x$with_unixodbc" = "xyes"; then
 	# The user asked for unixodbc support, but didn't tell us
@@ -631,7 +632,7 @@ if test "x$with_unixodbc" != "x" -a "x$with_unixodbc" != "xno"; then
 fi
 
 AC_ARG_WITH(odbc_nodm,
-AS_HELP_STRING([--with-odbc-nodm=DIR], [build odbc using headers in DIR/include]))
+AS_HELP_STRING([--with-odbc-nodm=DIR], [build ODBC using headers in DIR/include]))
 if test "x$with_odbc_nodm" != "x" -a "x$with_odbc_nodm" != "xno"; then
 	if echo "$with_odbc_nodm" | grep -v '^/'; then
 		with_odbc_nodm="$PWD/$with_odbc_nodm"
@@ -652,11 +653,11 @@ fi
 build_odbc=yes
 if test "$odbc" != "true"; then
 AC_ARG_ENABLE(odbc,
-	AS_HELP_STRING([--disable-odbc], [do not attempt to build odbc the driver]),
+	AS_HELP_STRING([--disable-odbc], [do not attempt to build the ODBC driver]),
 	[build_odbc=$enableval], [build_odbc=yes])
 fi
 AM_CONDITIONAL(INCODBC, test "$build_odbc" = "yes")
-  
+
 if test "$build_odbc" = "yes"
 then
 	case $host_os in
@@ -669,7 +670,7 @@ then
 	AC_SUBST(FREETDS_ODBC_MODULE)
 
 	# odbc not specified, try to detect it
-	echo looking for installed odbc driver manager
+	echo "looking for installed ODBC driver manager"
 	if test "$odbc" != "true" -a $tds_mingw = yes; then
 		odbc=true
 		unixodbc=true
@@ -719,13 +720,13 @@ then
 	# test for SQLLEN (iODBC do not define but typedef it)
 	save_cppflags="$CPPFLAGS"
 	CPPFLAGS="$CPPFLAGS $ODBC_INC"
-	AC_TRY_COMPILE([#if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__)
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__)
 #include <windows.h>
 #endif
-#include <sql.h>], [SQLLEN len = 123;],
+#include <sql.h>]], [[SQLLEN len = 123;]])],
 		AC_DEFINE(HAVE_SQLLEN, 1, [Define if sqltypes.h define SQLLEN])
 		# check SQLColAttribute definition
-		AC_TRY_COMPILE([#if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__)
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__)
 #include <windows.h>
 #endif
 #include <sql.h>
@@ -735,11 +736,11 @@ SQLRETURN  SQL_API SQLColAttribute (SQLHSTMT StatementHandle,
 	SQLUSMALLINT ColumnNumber, SQLUSMALLINT FieldIdentifier,
 	SQLPOINTER CharacterAttribute, SQLSMALLINT BufferLength,
 	SQLSMALLINT *StringLength, SQLLEN * NumericAttribute) {
-}], [return 0],
+}]], [[return 0]])],
 		AC_DEFINE(TDS_SQLCOLATTRIBUTE_SQLLEN, 1, [Define to 1 if last argument of SQLColAttribute it's SQLLEN *]))
 
 		# check is SQLParamOptions accept SQLULEN
-		AC_TRY_COMPILE([#if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__)
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__)
 #include <windows.h>
 #endif
 #include <sql.h>
@@ -748,7 +749,7 @@ SQLRETURN  SQL_API SQLColAttribute (SQLHSTMT StatementHandle,
 SQLRETURN SQL_API SQLParamOptions(SQLHSTMT       hstmt,
 	SQLULEN crow, SQLULEN *pirow) {
 	return SQL_SUCCESS;
-}], [return 0],
+}]], [[return 0]])],
 		AC_DEFINE(TDS_SQLPARAMOPTIONS_SQLLEN, 1, [Define to 1 if SQLParamOptions accept SQLULEN as arguments]))
 	)
 
@@ -765,8 +766,8 @@ SQLRETURN SQL_API SQLParamOptions(SQLHSTMT       hstmt,
 #include <sql.h>])
 
 	CPPFLAGS="$save_cppflags"
-else 
-	AC_MSG_NOTICE(odbc disabled)	
+else
+	AC_MSG_NOTICE(ODBC disabled)
 fi
 
 AM_CONDITIONAL(ODBC, test "$odbc" = "true")
@@ -777,9 +778,9 @@ AC_SUBST(ODBC_LDFLAGS)
 AC_SUBST(ODBCINST_LDFLAGS)
 
 AC_DEFUN([TDS_CHECK_GMP], [
-AC_TRY_LINK([#include <stdio.h>
-#include <gmp.h>],
-[mpz_t x; mpz_init(x); mpz_powm(x,x,x,x); mpz_clear(x); return 0;],
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdio.h>
+#include <gmp.h>]],
+[[mpz_t x; mpz_init(x); mpz_powm(x,x,x,x); mpz_clear(x); return 0;]])],
 AC_DEFINE(HAVE_GMP, 1, [Define if you have GMP library]),
 [$1])])
 
@@ -836,7 +837,7 @@ AC_ARG_ENABLE(pool,
 	AS_HELP_STRING([--disable-pool], [skip build of src/pool directory]))
 
 AC_ARG_ENABLE(msdblib,
-  AS_HELP_STRING([--enable-msdblib], [for MS style dblib]))
+	AS_HELP_STRING([--enable-msdblib], [for MS style dblib]))
 
 if test "$enable_msdblib" = "yes" ; then
 	dblib_define="#define MSDBLIB 1"
@@ -846,7 +847,7 @@ fi
 AC_SUBST(dblib_define)
 
 AC_ARG_ENABLE(sybase-compat,
-  AS_HELP_STRING([--enable-sybase-compat], [enable increased Open Client binary compatibility]))
+	AS_HELP_STRING([--enable-sybase-compat], [enable increased Open Client binary compatibility]))
 AM_CONDITIONAL(SYBASE_COMPAT, test x$enable_sybase_compat = xyes)
 if test x$enable_sybase_compat = xyes; then
 	AC_DEFINE(TDS_SYBASE_COMPAT, 1, [Defined if --enable-sybase-compat used])
@@ -854,8 +855,8 @@ fi
 
 AC_MSG_CHECKING(threadsafety)
 # Enable or disable thread safetiness
-# This option is enabled by default because most OS's support it.   
-# A more sophisticated approach would be to set the default per-OS.  
+# This option is enabled by default because most OS's support it.
+# A more sophisticated approach would be to set the default per-OS.
 AC_ARG_ENABLE(threadsafe,
 	AS_HELP_STRING([--disable-threadsafe], [disable calls to threadsafe fuctions e.g.,gethostbyname_r ]),
 	[use_threadsafe=$enableval], [use_threadsafe=yes])
@@ -893,65 +894,65 @@ AC_tds_FUNC_WHICH_GETPWUID_R
 AC_tds_FUNC_WHICH_LOCALTIME_R
 
 # easy test for pthread (no library, only mutex support)
-AC_TRY_LINK([#include <pthread.h>
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <pthread.h>
 #if !defined(_WIN32)
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-#endif],
-[pthread_mutex_lock(&mutex);
-pthread_mutex_unlock(&mutex)], AC_DEFINE(TDS_HAVE_PTHREAD_MUTEX, 1, [Define if you have pthread with mutex support]))
+#endif]],
+[[pthread_mutex_lock(&mutex);
+pthread_mutex_unlock(&mutex)]])], AC_DEFINE(TDS_HAVE_PTHREAD_MUTEX, 1, [Define if you have pthread with mutex support]))
 
 # easy test for locking stdio
-AC_TRY_LINK([#include <stdio.h>],
-[int c;
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdio.h>]],
+[[int c;
 flockfile(stdin);
 c = getc_unlocked(stdin);
-funlockfile(stdin);], AC_DEFINE(TDS_HAVE_STDIO_LOCKED, 1, [Define if stdio support locking]))
+funlockfile(stdin);]])], AC_DEFINE(TDS_HAVE_STDIO_LOCKED, 1, [Define if stdio support locking]))
 
 AC_ARG_ENABLE(debug,
 	AS_HELP_STRING([--disable-debug], [disable assert and other things]),
 	[use_debug=$enableval], [use_debug=yes])
-  
+
 if test "$use_debug" = "yes" ; then
-	AC_MSG_NOTICE(debug enabled)	
+	AC_MSG_NOTICE(debug enabled)
 	CPPFLAGS="$CPPFLAGS -DDEBUG=1"
 
 	AC_ARG_ENABLE(extra-checks,
-	  AS_HELP_STRING([--enable-extra-checks], [enable extra checks on code]))
+		AS_HELP_STRING([--enable-extra-checks], [enable extra checks on code]))
 	if test "$enable_extra_checks" = "yes" ; then
 		AC_DEFINE_UNQUOTED(ENABLE_EXTRA_CHECKS, 1, [Define to enable extra checks on code])
 	fi
 else
-	AC_MSG_NOTICE(debug disabled)	
+	AC_MSG_NOTICE(debug disabled)
 	CPPFLAGS="$CPPFLAGS -DNDEBUG=1"
 fi
 
 AC_ARG_ENABLE(developing,
-  AS_HELP_STRING([--enable-developing], [enable code still in develop]))
+	AS_HELP_STRING([--enable-developing], [enable code still in develop]))
 if test "$enable_developing" = "yes" ; then
 	AC_DEFINE_UNQUOTED(ENABLE_DEVELOPING, 1, [Define to enable work in progress code])
 fi
 AM_CONDITIONAL(ENABLE_DEVELOPING, test "$enable_developing" = "yes")
 
 AC_ARG_ENABLE(mars,
-  AS_HELP_STRING([--disable-mars], [enable MARS code]))
+	AS_HELP_STRING([--disable-mars], [enable MARS code]))
 if test "$enable_mars" != "no" ; then
 	AC_DEFINE_UNQUOTED(ENABLE_ODBC_MARS, 1, [Define to enable MARS support])
 fi
 
 AC_ARG_ENABLE(odbc-wide,
-  AS_HELP_STRING([--disable-odbc-wide], [disable wide string support in odbc]))
+	AS_HELP_STRING([--disable-odbc-wide], [disable wide string support in ODBC]))
 if test "$enable_odbc_wide" != "no" ; then
 	AC_DEFINE_UNQUOTED(ENABLE_ODBC_WIDE, 1, [Define to enable ODBC wide string support])
 
 	AC_ARG_ENABLE(odbc-wide-tests,
-	  AS_HELP_STRING([--enable-odbc-wide-tests], [enable compiling ODBC tests to use wide functions]))
+		AS_HELP_STRING([--enable-odbc-wide-tests], [enable compiling ODBC tests to use wide functions]))
 	AM_CONDITIONAL(ODBC_WIDE_TESTS, test "$enable_odbc_wide_tests" = "yes")
 else
 	AM_CONDITIONAL(ODBC_WIDE_TESTS, false)
 fi
 
 AC_ARG_ENABLE(distcheck_build,
-  AS_HELP_STRING([--enable-distcheck-build], [used internally for testing]))
+	AS_HELP_STRING([--enable-distcheck-build], [used internally for testing]))
 if test "$enable_distcheck_build" = "yes" ; then
 	AM_CONDITIONAL(DISTCHECK_BUILD, true)
 else
@@ -982,6 +983,7 @@ AC_MSG_RESULT(done)
 # ------------------------------------------------------------
 AC_CONFIG_FILES(include/freetds/version.h \
 	include/tds_sysdep_public.h \
+	include/freetds/sysdep_types.h \
 	Makefile \
 	include/Makefile \
 	include/freetds/Makefile \

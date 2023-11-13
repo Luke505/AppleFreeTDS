@@ -34,8 +34,8 @@ main(int argc, char *argv[])
 	char tmp[1024*4];
 	SQLSMALLINT len;
 	int succeeded = 0;
-	int is_freetds = 1;
-	int is_ms;
+	bool is_freetds;
+	bool is_ms;
 	SQLRETURN rc;
 
 	if (odbc_read_login_info())
@@ -62,14 +62,14 @@ main(int argc, char *argv[])
 
 	printf("SQLConnect connect..\n");
 	odbc_connect();
-	if (!odbc_driver_is_freetds())
-		is_freetds = 0;
+	is_freetds = odbc_driver_is_freetds();
 	is_ms = odbc_db_is_microsoft();
 	odbc_disconnect();
 	++succeeded;
 
 	if (!is_freetds) {
 		printf("Driver is not FreeTDS, exiting\n");
+		odbc_test_skipped();
 		return 0;
 	}
 

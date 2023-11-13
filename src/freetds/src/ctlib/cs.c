@@ -315,27 +315,32 @@ Cleanup:
 }
 
 CS_RETCODE
-cs_ctx_alloc(CS_INT version, CS_CONTEXT ** ctx)
+cs_ctx_alloc(CS_INT version, CS_CONTEXT ** out_ctx)
 {
 	TDSCONTEXT *tds_ctx;
+	CS_CONTEXT *ctx;
 
-	tdsdump_log(TDS_DBG_FUNC, "cs_ctx_alloc(%d, %p)\n", version, ctx);
+	tdsdump_log(TDS_DBG_FUNC, "cs_ctx_alloc(%d, %p)\n", version, out_ctx);
 
-	*ctx = tds_new0(CS_CONTEXT, 1);
-	tds_ctx = tds_alloc_context(*ctx);
+	ctx = tds_new0(CS_CONTEXT, 1);
+	if (!ctx)
+		return CS_FAIL;
+	ctx->use_large_identifiers = _ct_is_large_identifiers_version(version);
+	tds_ctx = tds_alloc_context(ctx);
 	if (!tds_ctx) {
-		free(*ctx);
+		free(ctx);
 		return CS_FAIL;
 	}
-	(*ctx)->tds_ctx = tds_ctx;
-	if (tds_ctx->locale && !tds_ctx->locale->date_fmt) {
+	ctx->tds_ctx = tds_ctx;
+	if (tds_ctx->locale && !tds_ctx->locale->datetime_fmt) {
 		/* set default in case there's no locale file */
-		tds_ctx->locale->date_fmt = strdup(STD_DATETIME_FMT);
+		tds_ctx->locale->datetime_fmt = strdup(STD_DATETIME_FMT);
 	}
 
-	(*ctx)->login_timeout = -1;
-	(*ctx)->query_timeout = -1;
+	ctx->login_timeout = -1;
+	ctx->query_timeout = -1;
 
+	*out_ctx = ctx;
 	return CS_SUCCEED;
 }
 
@@ -467,14 +472,15 @@ cs_config(CS_CONTEXT * ctx, CS_INT action, CS_INT property, CS_VOID * buffer, CS
 }
 
 CS_RETCODE
-cs_convert(CS_CONTEXT * ctx, CS_DATAFMT * srcfmt, CS_VOID * srcdata, CS_DATAFMT * destfmt, CS_VOID * destdata, CS_INT * resultlen)
+_cs_convert(CS_CONTEXT * ctx, const CS_DATAFMT_COMMON * srcfmt, CS_VOID * srcdata,
+	    const CS_DATAFMT_COMMON * destfmt, CS_VOID * destdata, CS_INT * resultlen)
 {
 	TDS_SERVER_TYPE src_type, desttype;
 	int src_len, destlen, len;
 	CONV_RESULT cres;
 	unsigned char *dest;
 	CS_RETCODE ret;
-	CS_INT dummy;
+	CS_INT dummy, datatype;
 	CS_VARCHAR *destvc = NULL;
 
 	tdsdump_log(TDS_DBG_FUNC, "cs_convert(%p, %p, %p, %p, %p, %p)\n", ctx, srcfmt, srcdata, destfmt, destdata, resultlen);
@@ -508,20 +514,23 @@ cs_convert(CS_CONTEXT * ctx, CS_DATAFMT * srcfmt, CS_VOID * srcdata, CS_DATAFMT 
 
 	}
 
-	src_type = _ct_get_server_type(NULL, srcfmt->datatype);
+	datatype = srcfmt->datatype;
+	src_type = _ct_get_server_type(NULL, datatype);
 	if (src_type == TDS_INVALID_TYPE)
 		return CS_FAIL;
 	src_len = srcfmt->maxlength;
-	if (srcfmt->datatype == CS_VARCHAR_TYPE || srcfmt->datatype == CS_VARBINARY_TYPE) {
+	if (datatype == CS_VARCHAR_TYPE || datatype == CS_VARBINARY_TYPE) {
 		CS_VARCHAR *vc = (CS_VARCHAR *) srcdata;
 		src_len = vc->len;
 		srcdata = vc->str;
 	}
-	desttype = _ct_get_server_type(NULL, destfmt->datatype);
+
+	datatype = destfmt->datatype;
+	desttype = _ct_get_server_type(NULL, datatype);
 	if (desttype == TDS_INVALID_TYPE)
 		return CS_FAIL;
 	destlen = destfmt->maxlength;
-	if (destfmt->datatype == CS_VARCHAR_TYPE || destfmt->datatype == CS_VARBINARY_TYPE) {
+	if (datatype == CS_VARCHAR_TYPE || datatype == CS_VARBINARY_TYPE) {
 		destvc = (CS_VARCHAR *) destdata;
 		destlen  = sizeof(destvc->str);
 		destdata = destvc->str;
@@ -832,6 +841,13 @@ cs_convert(CS_CONTEXT * ctx, CS_DATAFMT * srcfmt, CS_VOID * srcdata, CS_DATAFMT 
 	}
 	tdsdump_log(TDS_DBG_FUNC, "cs_convert() returning  %s\n", cs_prretcode(ret));
 	return (ret);
+}
+
+CS_RETCODE
+cs_convert(CS_CONTEXT * ctx, CS_DATAFMT * srcfmt, CS_VOID * srcdata, CS_DATAFMT * destfmt, CS_VOID * destdata, CS_INT * resultlen)
+{
+	return _cs_convert(ctx, _ct_datafmt_common(ctx, srcfmt), srcdata,
+			   _ct_datafmt_common(ctx, destfmt), destdata, resultlen);
 }
 
 CS_RETCODE

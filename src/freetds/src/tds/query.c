@@ -700,6 +700,26 @@ tds_count_placeholders_ucs2le(const char *query, const char *query_end)
 	}
 }
 
+static const char*
+tds50_char_declaration_from_usertype(TDSSOCKET *tds, TDS_INT usertype, unsigned int *p_size)
+{
+	switch (usertype) {
+	case USER_CHAR_TYPE:
+		return "CHAR(%u)";
+	case USER_VARCHAR_TYPE:
+		return "VARCHAR(%u)";
+	case USER_SYSNAME_TYPE:
+		return "SYSNAME";
+	case USER_NCHAR_TYPE:
+		*p_size /= tds->conn->ncharsize;
+		return "NCHAR(%u)";
+	case USER_NVARCHAR_TYPE:
+		*p_size /= tds->conn->ncharsize;
+		return "NVARCHAR(%u)";
+	}
+	return NULL;
+}
+
 /**
  * Return declaration for column (like "varchar(20)").
  *
@@ -729,10 +749,21 @@ tds_get_column_declaration(TDSSOCKET * tds, TDSCOLUMN * curcol, char *out)
 
 	switch (tds_get_conversion_type(curcol->on_server.column_type, curcol->on_server.column_size)) {
 	case XSYBCHAR:
+		if (IS_TDS50(tds->conn)) {
+			max_len = 32767;
+			fmt = tds50_char_declaration_from_usertype(tds, curcol->column_usertype, &size);
+			if (fmt != NULL)
+				break;
+		}
 	case SYBCHAR:
 		fmt = "CHAR(%u)";
 		break;
 	case SYBVARCHAR:
+		if (IS_TDS50(tds->conn)) {
+			fmt = tds50_char_declaration_from_usertype(tds, curcol->column_usertype, &size);
+			if (fmt != NULL)
+				break;
+		}
 	case XSYBVARCHAR:
 		if (curcol->column_varint_size == 8)
 			fmt = "VARCHAR(MAX)";
@@ -773,6 +804,25 @@ tds_get_column_declaration(TDSSOCKET * tds, TDSCOLUMN * curcol, char *out)
 		break;
 	case SYBLONGBINARY:	/* TODO correct ?? */
 	case SYBIMAGE:
+		if (IS_TDS50(tds->conn)) {
+			switch (curcol->column_usertype) {
+			case USER_UNICHAR_TYPE:
+				size /= 2u;
+				max_len = 8192;
+				fmt = "UNICHAR(%u)";
+				break;
+			case USER_UNIVARCHAR_TYPE:
+				size /= 2u;
+				max_len = 8192;
+				fmt = "UNIVARCHAR(%u)";
+				break;
+			case USER_UNITEXT_TYPE:
+				fmt = "UNITEXT";
+				break;
+			}
+			if (fmt != NULL)
+				break;
+		}
 		fmt = "IMAGE";
 		break;
 	case SYBMONEY4:
@@ -2116,7 +2166,6 @@ tds_send_cancel(TDSSOCKET * tds)
 
 /**
  * Quote a string properly. Output string is always NUL-terminated
- * \tds
  * \param buffer   output buffer. If NULL function will just return
  *        required bytes
  * \param quoting  quote character (should be one of '\'', '"', ']')
@@ -2125,13 +2174,11 @@ tds_send_cancel(TDSSOCKET * tds)
  * \returns size of output string
  */
 static size_t
-tds_quote(TDSSOCKET * tds, char *buffer, char quoting, const char *id, size_t len)
+tds_quote(char *buffer, char quoting, const char *id, size_t len)
 {
 	size_t size;
 	const char *src, *pend;
 	char *dst;
-
-	CHECK_TDS_EXTRA(tds);
 
 	pend = id + len;
 
@@ -2178,7 +2225,7 @@ tds_quote_id(TDSSOCKET * tds, char *buffer, const char *id, int idlen)
 
 	/* quote always for mssql */
 	if (TDS_IS_MSSQL(tds) || tds->conn->product_version >= TDS_SYB_VER(12, 5, 1))
-		return tds_quote(tds, buffer, ']', id, len);
+		return tds_quote(buffer, ']', id, len);
 
 	/* need quote ?? */
 	for (i = 0; i < len; ++i) {
@@ -2192,7 +2239,7 @@ tds_quote_id(TDSSOCKET * tds, char *buffer, const char *id, int idlen)
 			continue;
 		if (c == '_')
 			continue;
-		return tds_quote(tds, buffer, '\"', id, len);
+		return tds_quote(buffer, '\"', id, len);
 	}
 
 	if (buffer) {
@@ -2225,7 +2272,7 @@ tds_quote_id_rpc(TDSSOCKET * tds, char *buffer, const char *id, int idlen)
 
 	len = idlen < 0 ? strlen(id) : (size_t) idlen;
 
-	return tds_quote(tds, buffer, quote_id_char, id, len);
+	return tds_quote(buffer, quote_id_char, id, len);
 }
 
 /**
@@ -2240,7 +2287,7 @@ tds_quote_id_rpc(TDSSOCKET * tds, char *buffer, const char *id, int idlen)
 size_t
 tds_quote_string(TDSSOCKET * tds, char *buffer, const char *str, int len)
 {
-	return tds_quote(tds, buffer, '\'', str, len < 0 ? strlen(str) : (size_t) len);
+	return tds_quote(buffer, '\'', str, len < 0 ? strlen(str) : (size_t) len);
 }
 
 /**
@@ -3690,7 +3737,7 @@ tds_submit_begin_tran(TDSSOCKET *tds)
  * \sa tds_submit_begin_tran, tds_submit_commit
  */
 TDSRET
-tds_submit_rollback(TDSSOCKET *tds, int cont)
+tds_submit_rollback(TDSSOCKET *tds, bool cont)
 {
 	CHECK_TDS_EXTRA(tds);
 
@@ -3721,7 +3768,7 @@ tds_submit_rollback(TDSSOCKET *tds, int cont)
  * \sa tds_submit_rollback, tds_submit_begin_tran
  */
 TDSRET
-tds_submit_commit(TDSSOCKET *tds, int cont)
+tds_submit_commit(TDSSOCKET *tds, bool cont)
 {
 	CHECK_TDS_EXTRA(tds);
 
