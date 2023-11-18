@@ -323,7 +323,6 @@ if test $tds_mingw = no; then
 			netinet/in.h \
 			netinet/tcp.h \
 			roken.h \
-			com_err.h \
 			paths.h \
 			sys/ioctl.h \
 			sys/socket.h ])

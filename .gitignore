@@ -10,7 +10,6 @@
 
 # Libraries
 *.lib
-*.a
 *.la
 *.lo
 
@@ -40,3 +39,6 @@
 *.ipr
 *.iws
 .idea/
+
+# workspace
+/FreeTDSKit.xcodeproj/project.xcworkspace/xcuserdata

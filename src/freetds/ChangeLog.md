@@ -2,10 +2,13 @@
 
 ## Features
 
-- Added support for setting the encryption level for communication with the server on the `dbsetlname` function using the `DBSETENCRYPTION` parameter.
-
-- Introduced the `dbsqlexecparams` function, allowing users to send queries and query parameters with a single function call. Also added the `TDSPARAMINFO` model for defining query parameters.
+- Added support for configuring the encryption level when communicating with the server using the `DBSETENCRYPTION` parameter in the `dbsetlname` function.
+- Introduced the `dbsqlexecparams` function, enabling users to send queries and query parameters with a single function call. Also, added the `TDSPARAMINFO` model for defining query parameters.
 
 ## Changes
 
-- Disabled the `ENABLE_ODBC_MARS` option in the CMakeLists.txt file, switching it from `ON` to `OFF`.
+- Disabled the check for the `clock_gettime` function in the `config_h.vms` file.
+- Disabled the check for the import file `com_err.h` in the `configure.ac` file.
+- Disabled the check for the `BIO_get_data` function in the `m4/check_openssl.m4` and `vms/config_h.vms` files.
+- Disabled the check for the `RSA_get0_key` function in the `m4/check_openssl.m4` and `vms/config_h.vms` files.
+- Disabled the check for the `ASN1_STRING_get0_data` function in the `m4/check_openssl.m4` file.

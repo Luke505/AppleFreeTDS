@@ -34,7 +34,6 @@ NETWORK_LIBS="$NETWORK_LIBS $OPENSSL_LIBS"], [found_ssl=no
     elif test x$found_ssl = xyes; then
         HAVE_OPENSSL=yes
         ACX_PUSH_LIBS("$NETWORK_LIBS")
-        AC_CHECK_FUNCS([BIO_get_data RSA_get0_key ASN1_STRING_get0_data])
         ACX_POP_LIBS
         AC_DEFINE(HAVE_OPENSSL, 1, [Define if you have the OpenSSL.])
     else

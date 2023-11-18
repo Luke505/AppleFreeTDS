@@ -477,8 +477,8 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 6521F194144E6B1500CBCC36 /* Build configuration list for PBXNativeTarget "FreeTDSKit-macos" */;
 			buildPhases = (
-				6521F17A144E6B1500CBCC36 /* Sources */,
 				6521F17B144E6B1500CBCC36 /* Frameworks */,
+				6521F17A144E6B1500CBCC36 /* Sources */,
 				6521F17C144E6B1500CBCC36 /* Headers */,
 				6521F17D144E6B1500CBCC36 /* Resources */,
 			);
@@ -495,8 +495,8 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7203D1B01E1EA27300DC960E /* Build configuration list for PBXNativeTarget "FreeTDSKit-ios" */;
 			buildPhases = (
-				7203D1731E1EA27300DC960E /* Sources */,
 				7203D19E1E1EA27300DC960E /* Frameworks */,
+				7203D1731E1EA27300DC960E /* Sources */,
 				7203D1A31E1EA27300DC960E /* Headers */,
 				7203D1AD1E1EA27300DC960E /* Resources */,
 			);
@@ -756,6 +756,7 @@
 					"$(PROJECT_DIR)/libs/macOS",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = net.developerpass.FreeTDSKit;
 				PRODUCT_NAME = FreeTDSKit;
 				SDKROOT = macosx;
