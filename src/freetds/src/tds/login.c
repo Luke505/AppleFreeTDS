@@ -344,7 +344,7 @@ tds_set_spid(TDSSOCKET * tds, TDSCOLUMN *curcol)
 }
 
 /**
- * Set ncharsize and unicharsize based on column data.
+ * Set ncharsize based on column data.
  * \tds
  * @param res_info  resultset to get data from.
  */
@@ -358,9 +358,6 @@ tds_set_nvc(TDSSOCKET * tds, TDSRESULTINFO *res_info)
 	charsize = res_info->columns[0]->on_server.column_size / 3;
 	if (charsize >= 1 && charsize <= 4)
 		tds->conn->ncharsize = (uint8_t) charsize;
-	charsize = res_info->columns[1]->on_server.column_size / 3;
-	if (charsize >= 1 && charsize <= 4)
-		tds->conn->unicharsize = (uint8_t) charsize;
 	return TDS_SUCCESS;
 }
 
@@ -387,7 +384,7 @@ tds_parse_login_results(TDSSOCKET * tds)
 			curcol = tds->res_info->columns[0];
 			if (tds->res_info->num_cols == 1 && strcmp(tds_dstr_cstr(&curcol->column_name), "spid") == 0)
 				rc = tds_set_spid(tds, curcol);
-			if (tds->res_info->num_cols == 2 && strcmp(tds_dstr_cstr(&curcol->column_name), "nvc") == 0)
+			if (tds->res_info->num_cols == 1 && strcmp(tds_dstr_cstr(&curcol->column_name), "nvc") == 0)
 				rc = tds_set_nvc(tds, tds->res_info);
 			if (TDS_FAILED(rc))
 				return rc;
@@ -436,7 +433,7 @@ tds_setup_connection(TDSSOCKET *tds, TDSLOGIN *login, bool set_db, bool set_spid
 		tds_quote_id(tds, strchr(str, 0), tds_dstr_cstr(&login->database), -1);
 	}
 	if (IS_TDS50(tds->conn)) {
-		strcat(str, " SELECT CAST('abc' AS NVARCHAR(3)) AS nvc, CAST('xyz' AS UNIVARCHAR(3)) AS uvc");
+		strcat(str, " SELECT CAST('abc' AS NVARCHAR(3)) AS nvc");
 		parse_results = true;
 	}
 
