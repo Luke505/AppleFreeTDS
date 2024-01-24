@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1430"
+   LastUpgradeVersion = "1520"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,10 +14,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "6521F17E144E6B1500CBCC36"
-               BuildableName = "FreeTDSKit.framework"
-               BlueprintName = "FreeTDSKit-macos"
-               ReferencedContainer = "container:FreeTDSKit.xcodeproj">
+               BlueprintIdentifier = "7203D1721E1EA27300DC960E"
+               BuildableName = "FreeTDS.framework"
+               BlueprintName = "FreeTDS-ios"
+               ReferencedContainer = "container:FreeTDS.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -43,10 +43,10 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "6521F17E144E6B1500CBCC36"
-            BuildableName = "FreeTDSKit.framework"
-            BlueprintName = "FreeTDSKit-macos"
-            ReferencedContainer = "container:FreeTDSKit.xcodeproj">
+            BlueprintIdentifier = "7203D1721E1EA27300DC960E"
+            BuildableName = "FreeTDS.framework"
+            BlueprintName = "FreeTDS-ios"
+            ReferencedContainer = "container:FreeTDS.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </LaunchAction>
@@ -59,10 +59,10 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "6521F17E144E6B1500CBCC36"
-            BuildableName = "FreeTDSKit.framework"
-            BlueprintName = "FreeTDSKit-macos"
-            ReferencedContainer = "container:FreeTDSKit.xcodeproj">
+            BlueprintIdentifier = "7203D1721E1EA27300DC960E"
+            BuildableName = "FreeTDS.framework"
+            BlueprintName = "FreeTDS-ios"
+            ReferencedContainer = "container:FreeTDS.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </ProfileAction>
