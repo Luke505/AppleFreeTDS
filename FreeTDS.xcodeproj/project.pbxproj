@@ -134,13 +134,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		6521F17F144E6B1500CBCC36 /* FreeTDS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FreeTDS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		6521F17F144E6B1500CBCC36 /* FreeTDS-macos.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "FreeTDS-macos.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6521F187144E6B1500CBCC36 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		6521F18A144E6B1500CBCC36 /* FreeTDS-macos-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "FreeTDS-macos-Info.plist"; sourceTree = "<group>"; };
 		6587B584144EA6940081A62B /* libiconv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.dylib; path = usr/lib/libiconv.dylib; sourceTree = SDKROOT; };
 		6587B60E14521A300081A62B /* freetds.conf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = freetds.conf; path = src/freetds/freetds.conf; sourceTree = SOURCE_ROOT; };
 		7203D12C1E1E8A8F00DC960E /* cryptohelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = cryptohelper.m; sourceTree = "<group>"; };
-		7203D1B31E1EA27300DC960E /* FreeTDS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FreeTDS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		7203D1B31E1EA27300DC960E /* FreeTDS-ios.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "FreeTDS-ios.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7203D1B51E1EA2C400DC960E /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = libs/macOS/libcrypto.a; sourceTree = "<group>"; };
 		7203D1B61E1EA2C400DC960E /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = libs/macOS/libssl.a; sourceTree = "<group>"; };
 		7203D1B91E1EA2D000DC960E /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = libs/iOS/libcrypto.a; sourceTree = "<group>"; };
@@ -262,8 +262,8 @@
 		6521F180144E6B1500CBCC36 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6521F17F144E6B1500CBCC36 /* FreeTDS.framework */,
-				7203D1B31E1EA27300DC960E /* FreeTDS.framework */,
+				6521F17F144E6B1500CBCC36 /* FreeTDS-macos.framework */,
+				7203D1B31E1EA27300DC960E /* FreeTDS-ios.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -316,7 +316,6 @@
 			children = (
 				6587B60E14521A300081A62B /* freetds.conf */,
 				6521F18A144E6B1500CBCC36 /* FreeTDS-macos-Info.plist */,
-				6521F18B144E6B1500CBCC36 /* InfoPlist.strings */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -490,7 +489,7 @@
 			);
 			name = "FreeTDS-macos";
 			productName = FreeTDS;
-			productReference = 6521F17F144E6B1500CBCC36 /* FreeTDS.framework */;
+			productReference = 6521F17F144E6B1500CBCC36 /* FreeTDS-macos.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		7203D1721E1EA27300DC960E /* FreeTDS-ios */ = {
@@ -508,7 +507,7 @@
 			);
 			name = "FreeTDS-ios";
 			productName = FreeTDS;
-			productReference = 7203D1B31E1EA27300DC960E /* FreeTDS.framework */;
+			productReference = 7203D1B31E1EA27300DC960E /* FreeTDS-ios.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
@@ -552,7 +551,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7203D1AE1E1EA27300DC960E /* InfoPlist.strings in Resources */,
 				7203D1AF1E1EA27300DC960E /* freetds.conf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -713,7 +711,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				SDKROOT = macosx;
 				VALID_ARCHS = "x86_64 arm64 armv7 armv7s";
@@ -765,7 +763,8 @@
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++14";
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = net.developerpass.FreeTDS;
-				PRODUCT_NAME = FreeTDS;
+				PRODUCT_MODULE_NAME = "FreeTDS-macos";
+				PRODUCT_NAME = "FreeTDS-macos";
 				SDKROOT = macosx;
 				SUPPORTED_PLATFORMS = macosx;
 				USER_HEADER_SEARCH_PATHS = "";
@@ -806,7 +805,7 @@
 				);
 				INFOPLIST_FILE = "FreeTDS-ios-Info.plist";
 				INSTALL_PATH = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/libs/iOS",
@@ -815,7 +814,8 @@
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++14";
 				PRODUCT_BUNDLE_IDENTIFIER = net.developerpass.FreeTDS;
-				PRODUCT_NAME = FreeTDS;
+				PRODUCT_MODULE_NAME = "FreeTDS-ios";
+				PRODUCT_NAME = "FreeTDS-ios";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				USER_HEADER_SEARCH_PATHS = "";

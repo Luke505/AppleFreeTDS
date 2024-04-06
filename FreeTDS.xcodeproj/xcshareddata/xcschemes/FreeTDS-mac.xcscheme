@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "6521F17E144E6B1500CBCC36"
-               BuildableName = "FreeTDS.framework"
+               BuildableName = "FreeTDS-macos.framework"
                BlueprintName = "FreeTDS-macos"
                ReferencedContainer = "container:FreeTDS.xcodeproj">
             </BuildableReference>
@@ -31,7 +31,7 @@
       </Testables>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Debug"
+      buildConfiguration = "Release"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
@@ -44,7 +44,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "6521F17E144E6B1500CBCC36"
-            BuildableName = "FreeTDS.framework"
+            BuildableName = "FreeTDS-macos.framework"
             BlueprintName = "FreeTDS-macos"
             ReferencedContainer = "container:FreeTDS.xcodeproj">
          </BuildableReference>
@@ -60,7 +60,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "6521F17E144E6B1500CBCC36"
-            BuildableName = "FreeTDS.framework"
+            BuildableName = "FreeTDS-macos.framework"
             BlueprintName = "FreeTDS-macos"
             ReferencedContainer = "container:FreeTDS.xcodeproj">
          </BuildableReference>
