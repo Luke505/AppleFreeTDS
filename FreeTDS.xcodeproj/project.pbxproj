@@ -131,6 +131,7 @@
 		72AD13662316FFB700C87C40 /* net.c in Sources */ = {isa = PBXBuildFile; fileRef = 72AD134A2316FFB700C87C40 /* net.c */; };
 		72AD13692317006400C87C40 /* iconv.c in Sources */ = {isa = PBXBuildFile; fileRef = 72AD13682317006400C87C40 /* iconv.c */; };
 		72AD136A2317006400C87C40 /* iconv.c in Sources */ = {isa = PBXBuildFile; fileRef = 72AD13682317006400C87C40 /* iconv.c */; };
+		DE0B0CE82C1ADC5700985441 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DE0B0CE72C1ADC5000985441 /* libz.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -213,6 +214,7 @@
 		72D6B8471D819BD700D8F697 /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../../../../../../../../../usr/local/Cellar/openssl/1.0.2h_1/lib/libssl.a; sourceTree = "<group>"; };
 		72F47B391D217F9400D9C207 /* libssl.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libssl.tbd; path = usr/lib/libssl.tbd; sourceTree = SDKROOT; };
 		72F47B3B1D217F9C00D9C207 /* libcrypto.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcrypto.tbd; path = usr/lib/libcrypto.tbd; sourceTree = SDKROOT; };
+		DE0B0CE72C1ADC5000985441 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		DEDD52902B619785006A4A52 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		DEDD52912B619785006A4A52 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		DEFD089A2B62ED2C006BABA8 /* FreeTDS-macos-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "FreeTDS-macos-Info.plist"; sourceTree = "<group>"; };
@@ -228,6 +230,7 @@
 				7203D1B81E1EA2C400DC960E /* libssl.a in Frameworks */,
 				6587B586144EBF310081A62B /* Foundation.framework in Frameworks */,
 				6587B585144EA6940081A62B /* libiconv.dylib in Frameworks */,
+				DE0B0CE82C1ADC5700985441 /* libz.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -271,6 +274,7 @@
 		6521F181144E6B1500CBCC36 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DE0B0CE72C1ADC5000985441 /* libz.tbd */,
 				7203D1B91E1EA2D000DC960E /* libcrypto.a */,
 				7203D1BA1E1EA2D000DC960E /* libssl.a */,
 				7203D1B51E1EA2C400DC960E /* libcrypto.a */,
@@ -768,7 +772,7 @@
 				SDKROOT = macosx;
 				SUPPORTED_PLATFORMS = macosx;
 				USER_HEADER_SEARCH_PATHS = "";
-				VALID_ARCHS = "x86_64 i386";
+				VALID_ARCHS = "x86_64 i386 arm64";
 				VERSIONING_SYSTEM = "apple-generic";
 				WRAPPER_EXTENSION = framework;
 			};
