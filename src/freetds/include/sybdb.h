@@ -450,6 +450,7 @@ typedef struct
 
 typedef struct tds_dblib_dbprocess DBPROCESS;
 typedef struct tds_dblib_queryparam TDSQUERYPARAM;
+typedef struct tds_dblib_error DBERROR;
 
 /*
  * Sybase & Microsoft use different names for the dbdaterec members. 
@@ -783,6 +784,7 @@ int dbgettime(void);
 #define DBGETTIME dbgettime
 BYTE *dbgetuserdata(DBPROCESS * dbproc);
 DBBOOL dbhasretstat(DBPROCESS * dbproc);
+DBERROR *dbgetlasterror(void);
 RETCODE dbinit(void);
 int dbiordesc(DBPROCESS * dbproc);
 

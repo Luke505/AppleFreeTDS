@@ -345,52 +345,7 @@ tds_get_home_file(const char *file)
 bool
 tds_read_conf_file(TDSLOGIN * login, const char *server)
 {
-	char *path = NULL;
-	char *eptr = NULL;
-	bool found = false;
-
-	if (interf_file) {
-		found = tds_try_conf_file(interf_file, "set programmatically", server, login);
-	}
-
-	/* FREETDSCONF env var, pkleef@openlinksw.com 01/21/02 */
-	if (!found) {
-		path = getenv("FREETDSCONF");
-		if (path) {
-			found = tds_try_conf_file(path, "(from $FREETDSCONF)", server, login);
-		} else {
-			tdsdump_log(TDS_DBG_INFO2, "... $FREETDSCONF not set.  Trying $FREETDS/etc.\n");
-		}
-	}
-
-	/* FREETDS env var, Bill Thompson 16/07/03 */
-	if (!found) {
-		eptr = getenv("FREETDS");
-		if (eptr) {
-			if (asprintf(&path, freetds_conf, eptr) >= 0) {
-				found = tds_try_conf_file(path, location, server, login);
-				free(path);
-			}
-		} else {
-			tdsdump_log(TDS_DBG_INFO2, "... $FREETDS not set.  Trying $HOME.\n");
-		}
-	}
-
-	if (!found) {
-		path = tds_get_home_file(".freetds.conf");
-		if (path) {
-			found = tds_try_conf_file(path, "(.freetds.conf)", server, login);
-			free(path);
-		} else {
-			tdsdump_log(TDS_DBG_INFO2, "... Error getting ~/.freetds.conf.  Trying %s.\n", FREETDS_SYSCONFFILE);
-		}
-	}
-
-	if (!found) {
-		found = tds_try_conf_file(FREETDS_SYSCONFFILE, "(default)", server, login);
-	}
-
-	return found;
+	return false;
 }
 
 static bool

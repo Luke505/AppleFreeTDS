@@ -172,6 +172,12 @@ struct tds_dblib_queryparam
     BYTE *value;
 };
 
+struct tds_dblib_error
+{
+	char *dberrstr;
+	int severity;
+};
+
 enum {
 #if MSDBLIB
 	dblib_msdblib = 1

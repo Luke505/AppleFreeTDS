@@ -68,6 +68,8 @@ static int _dbnullable(DBPROCESS * dbproc, int column);
 static const char *tds_prdatatype(int datatype_token);
 
 static int default_err_handler(DBPROCESS * dbproc, int severity, int dberr, int oserr, char *dberrstr, char *oserrstr);
+static int default_msg_handler(DBPROCESS * dbproc, DBINT msgno, int msgstate, int severity, char *msgtext,
+								char *srvname, char *proc, int line);
 
 void copy_data_to_host_var(DBPROCESS *, TDS_SERVER_TYPE, const BYTE *, int, BYTE *, DBINT, int, DBINT *);
 RETCODE dbgetnull(DBPROCESS *dbproc, int bindtype, int varlen, BYTE* varaddr);
@@ -161,12 +163,12 @@ RETCODE dbgetnull(DBPROCESS *dbproc, int bindtype, int varlen, BYTE* varaddr);
  */
 
 /* info/err message handler functions (or rather pointers to them) */
-MHANDLEFUNC _dblib_msg_handler = NULL;
+MHANDLEFUNC _dblib_msg_handler = default_msg_handler;
 EHANDLEFUNC _dblib_err_handler = default_err_handler;
 
 /** \internal
  * \dblib_internal
- * \remarks A db-lib connection has an implicit TDS context. 
+ * \remarks A db-lib connection has an implicit TDS context.
  */
 typedef struct dblib_context
 {
@@ -189,6 +191,7 @@ typedef struct dblib_context
 }
 DBLIBCONTEXT;
 
+static DBERROR _last_error;
 static DBLIBCONTEXT g_dblib_ctx;
 static tds_mutex dblib_mutex = TDS_MUTEX_INITIALIZER;
 
@@ -646,6 +649,12 @@ dbgetnull(DBPROCESS *dbproc, int bindtype, int varlen, BYTE* varaddr)
 	return SUCCEED;
 }
 
+DBERROR *
+dbgetlasterror(void)
+{
+	return &_last_error;
+}
+
 /**
  * \ingroup dblib_core
  * \brief Initialize db-lib.  
@@ -659,6 +668,7 @@ dbgetnull(DBPROCESS *dbproc, int bindtype, int varlen, BYTE* varaddr)
 RETCODE
 dbinit(void)
 {
+	_dblib_msg_handler = default_msg_handler;
 	_dblib_err_handler = default_err_handler;
 
 	tds_mutex_lock(&dblib_mutex);
@@ -5337,18 +5347,24 @@ default_err_handler(DBPROCESS * dbproc, int severity, int dberr, int oserr, char
 {
 	tdsdump_log(TDS_DBG_FUNC, "default_err_handler %p, %d, %d, %d, %p, %p", dbproc, severity, dberr, oserr, dberrstr, oserrstr);
 
-	if (DBDEAD(dbproc) && (!dbproc || !dbproc->msdblib)) {
-		return INT_EXIT;
+	_last_error.dberrstr = dberrstr;
+	_last_error.severity = severity;
+
+	return INT_CANCEL;
+}
+
+static int
+default_msg_handler(DBPROCESS * dbproc, DBINT msgno, int msgstate, int severity, char *msgtext, char *srvname,
+	char *proc, int line)
+{
+	tdsdump_log(TDS_DBG_FUNC, "default_msg_handler %p, %d, %d, %d, %p, %p, %p, %d", dbproc, msgno, msgstate, severity,
+		msgtext, srvname, proc, line);
+
+	if (severity > 10) {
+		_last_error.dberrstr = msgtext;
+		_last_error.severity = severity;
 	}
-	
-	if (!dbproc || !dbproc->msdblib) {	/* i.e. Sybase behavior */
-		switch(dberr) {
-		case SYBETIME:
-			return INT_EXIT;
-		default: 
-			break;
-		}
-	}
+
 	return INT_CANCEL;
 }
 
@@ -5368,9 +5384,9 @@ dberrhandle(EHANDLEFUNC handler)
 
 	tdsdump_log(TDS_DBG_FUNC, "dberrhandle(%p)\n", handler);
 
-	_dblib_err_handler = handler? handler : default_err_handler;
+	_dblib_err_handler = handler ? handler : default_err_handler;
 	
-	return (old_handler == default_err_handler)? NULL : old_handler;
+	return (old_handler == default_err_handler) ? NULL : old_handler;
 }
 
 /**
@@ -5383,12 +5399,13 @@ dberrhandle(EHANDLEFUNC handler)
 MHANDLEFUNC
 dbmsghandle(MHANDLEFUNC handler)
 {
-	MHANDLEFUNC retFun = _dblib_msg_handler;
+	MHANDLEFUNC old_handler = _dblib_msg_handler;
 
 	tdsdump_log(TDS_DBG_FUNC, "dbmsghandle(%p)\n", handler);
 
-	_dblib_msg_handler = handler;
-	return retFun;
+	_dblib_msg_handler = handler ? handler : default_msg_handler;
+
+	return (old_handler == default_msg_handler) ? NULL : old_handler;
 }
 
 #if defined(DBLIB_UNIMPLEMENTED)

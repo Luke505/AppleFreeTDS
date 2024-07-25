@@ -64,6 +64,7 @@ EXPORTS
 	dbgettime
 	dbgetuserdata
 	dbhasretstat
+	dbgetlasterror
 	dbinit
 	dbiordesc
 	dbiowdesc
