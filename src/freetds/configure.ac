@@ -11,7 +11,7 @@ dnl ------------------------------------------------------------
 # ------------------------------------------------------------
 # Initialization
 # ------------------------------------------------------------
-AC_INIT(FreeTDS, 1.4.10)
+AC_INIT(FreeTDS, 1.4.22)
 AC_CONFIG_SRCDIR(src/dblib/dblib.c)
 AC_PREREQ(2.53)
 
@@ -323,6 +323,7 @@ if test $tds_mingw = no; then
 			netinet/in.h \
 			netinet/tcp.h \
 			roken.h \
+			com_err.h \
 			paths.h \
 			sys/ioctl.h \
 			sys/socket.h ])
@@ -1002,6 +1003,7 @@ AC_CONFIG_FILES(include/freetds/version.h \
 	src/odbc/unittests/Makefile \
 	src/apps/Makefile \
 	src/apps/fisql/Makefile \
+	src/apps/unittests/Makefile \
 	freetds.spec \
 	win32/Makefile \
 	win32/freetds.nsh \

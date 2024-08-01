@@ -159,25 +159,6 @@ struct tds_dblib_dbprocess
 	NULLREP		nullreps[MAXBINDTYPES];
 };
 
-struct tds_dblib_queryparam
-{
-    struct tds_dblib_queryparam *next;
-    char *name;
-    int output;
-    int datatype;
-    TDS_INT maxlen;
-    TDS_INT scale;
-    TDS_INT precision;
-    TDS_INT datalen;
-    BYTE *value;
-};
-
-struct tds_dblib_error
-{
-	char *dberrstr;
-	int severity;
-};
-
 enum {
 #if MSDBLIB
 	dblib_msdblib = 1

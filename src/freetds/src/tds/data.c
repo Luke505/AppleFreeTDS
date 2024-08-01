@@ -266,6 +266,15 @@ tds_set_param_type(TDSCONNECTION * conn, TDSCOLUMN * curcol, TDS_SERVER_TYPE typ
 		default:
 			break;
 		}
+	} else if (IS_TDS50(conn)) {
+		switch (type) {
+		case SYBINT8:
+			type = SYB5INT8;
+			break;
+			/* avoid warning on other types */
+		default:
+			break;
+		}
 	}
 	tds_set_column_type(conn, curcol, type);
 

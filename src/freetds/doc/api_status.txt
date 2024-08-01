@@ -328,7 +328,6 @@ dblib	core     	dbgetpacket			(same)		OK
 dblib	core     	dbgetrow			(same)		OK
 dblib	core     	dbgettime			DBGETTIME	OK
 dblib	core     	dbgetuserdata			(same)		OK
-dblib	core     	dbgetlasterror			(same)		OK
 dblib	core     	dbinit				(same)		OK
 dblib	core     	dbisavail			DBISAVAIL	OK
 dblib	core     	dbiscount			n/a		OK
