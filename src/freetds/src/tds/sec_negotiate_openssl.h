@@ -17,10 +17,13 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include <openssl/opensslconf.h>
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#include <openssl/rsa.h>
+#include <openssl/bn.h>
 
 /**
  * \ingroup libtds

@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6587B585144EA6940081A62B /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6587B584144EA6940081A62B /* libiconv.dylib */; };
 		6587B586144EBF310081A62B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6521F187144E6B1500CBCC36 /* Foundation.framework */; };
 		6587B60F14521A300081A62B /* freetds.conf in Resources */ = {isa = PBXBuildFile; fileRef = 6587B60E14521A300081A62B /* freetds.conf */; };
 		7203D12E1E1E8A8F00DC960E /* cryptohelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 7203D12C1E1E8A8F00DC960E /* cryptohelper.m */; };
@@ -46,18 +45,13 @@
 		7203D19B1E1EA27300DC960E /* bcp.c in Sources */ = {isa = PBXBuildFile; fileRef = 721360371D1858F1006A3F33 /* bcp.c */; };
 		7203D19C1E1EA27300DC960E /* challenge.c in Sources */ = {isa = PBXBuildFile; fileRef = 72135FE81D1858A7006A3F33 /* challenge.c */; };
 		7203D19D1E1EA27300DC960E /* iconv.c in Sources */ = {isa = PBXBuildFile; fileRef = 72135FF11D1858A7006A3F33 /* iconv.c */; };
-		7203D1A11E1EA27300DC960E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6521F187144E6B1500CBCC36 /* Foundation.framework */; };
-		7203D1A21E1EA27300DC960E /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6587B584144EA6940081A62B /* libiconv.dylib */; };
+		7203D1A11E1EA27300DC960E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6521F187144E6B1500CBCC36 /* Foundation.framework */; settings = {ATTRIBUTES = (Required, ); }; };
 		7203D1A41E1EA27300DC960E /* buffering.h in Headers */ = {isa = PBXBuildFile; fileRef = 7213603F1D1858F1006A3F33 /* buffering.h */; };
 		7203D1A51E1EA27300DC960E /* sec_negotiate_openssl.h in Headers */ = {isa = PBXBuildFile; fileRef = 7213600C1D1858A7006A3F33 /* sec_negotiate_openssl.h */; };
 		7203D1A61E1EA27300DC960E /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 72078E2F1D5A32E9005A3788 /* config.h */; };
 		7203D1AA1E1EA27300DC960E /* sec_negotiate_gnutls.h in Headers */ = {isa = PBXBuildFile; fileRef = 7213600B1D1858A7006A3F33 /* sec_negotiate_gnutls.h */; };
 		7203D1AB1E1EA27300DC960E /* tds.h in Headers */ = {isa = PBXBuildFile; fileRef = 72078E2D1D5A30B2005A3788 /* tds.h */; };
 		7203D1AF1E1EA27300DC960E /* freetds.conf in Resources */ = {isa = PBXBuildFile; fileRef = 6587B60E14521A300081A62B /* freetds.conf */; };
-		7203D1B71E1EA2C400DC960E /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7203D1B51E1EA2C400DC960E /* libcrypto.a */; };
-		7203D1B81E1EA2C400DC960E /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7203D1B61E1EA2C400DC960E /* libssl.a */; };
-		7203D1BB1E1EA2D000DC960E /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7203D1B91E1EA2D000DC960E /* libcrypto.a */; };
-		7203D1BC1E1EA2D000DC960E /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7203D1BA1E1EA2D000DC960E /* libssl.a */; };
 		7203D1CB1E1EC68B00DC960E /* sybdb.h in Headers */ = {isa = PBXBuildFile; fileRef = 7203D1CA1E1EC68B00DC960E /* sybdb.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7203D1CC1E1EC68B00DC960E /* sybdb.h in Headers */ = {isa = PBXBuildFile; fileRef = 7203D1CA1E1EC68B00DC960E /* sybdb.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		72078E2E1D5A30B2005A3788 /* tds.h in Headers */ = {isa = PBXBuildFile; fileRef = 72078E2D1D5A30B2005A3788 /* tds.h */; };
@@ -132,16 +126,18 @@
 		72AD13692317006400C87C40 /* iconv.c in Sources */ = {isa = PBXBuildFile; fileRef = 72AD13682317006400C87C40 /* iconv.c */; };
 		72AD136A2317006400C87C40 /* iconv.c in Sources */ = {isa = PBXBuildFile; fileRef = 72AD13682317006400C87C40 /* iconv.c */; };
 		DE0B0CE82C1ADC5700985441 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DE0B0CE72C1ADC5000985441 /* libz.tbd */; };
+		DE3CBF832C5E37D2007466FF /* libcrypto.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DE3CBF822C5E37D2007466FF /* libcrypto.xcframework */; };
+		DE3CBF872C5E37DD007466FF /* libssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DE3CBF862C5E37DD007466FF /* libssl.xcframework */; };
+		DE5E193F2C5D501900F35B84 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7203D1B51E1EA2C400DC960E /* libcrypto.a */; };
+		DE5E19402C5D501900F35B84 /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7203D1B61E1EA2C400DC960E /* libssl.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		6521F17F144E6B1500CBCC36 /* FreeTDS-macos.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "FreeTDS-macos.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6521F17F144E6B1500CBCC36 /* FreeTDS-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "FreeTDS-macOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6521F187144E6B1500CBCC36 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		6521F18A144E6B1500CBCC36 /* FreeTDS-macos-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "FreeTDS-macos-Info.plist"; sourceTree = "<group>"; };
-		6587B584144EA6940081A62B /* libiconv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.dylib; path = usr/lib/libiconv.dylib; sourceTree = SDKROOT; };
 		6587B60E14521A300081A62B /* freetds.conf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = freetds.conf; path = src/freetds/freetds.conf; sourceTree = SOURCE_ROOT; };
 		7203D12C1E1E8A8F00DC960E /* cryptohelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = cryptohelper.m; sourceTree = "<group>"; };
-		7203D1B31E1EA27300DC960E /* FreeTDS-ios.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "FreeTDS-ios.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		7203D1B31E1EA27300DC960E /* FreeTDS-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "FreeTDS-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7203D1B51E1EA2C400DC960E /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = libs/macOS/libcrypto.a; sourceTree = "<group>"; };
 		7203D1B61E1EA2C400DC960E /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = libs/macOS/libssl.a; sourceTree = "<group>"; };
 		7203D1B91E1EA2D000DC960E /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = libs/iOS/libcrypto.a; sourceTree = "<group>"; };
@@ -186,8 +182,6 @@
 		7213603C1D1858F1006A3F33 /* rpc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = rpc.c; path = src/freetds/src/dblib/rpc.c; sourceTree = "<group>"; };
 		7213603E1D1858F1006A3F33 /* xact.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = xact.c; path = src/freetds/src/dblib/xact.c; sourceTree = "<group>"; };
 		7213603F1D1858F1006A3F33 /* buffering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buffering.h; path = src/freetds/src/dblib/buffering.h; sourceTree = "<group>"; };
-		724F93501D86F4F400FDFF6B /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../../../libcrypto.a; sourceTree = "<group>"; };
-		724F93511D86F4F400FDFF6B /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../../../libssl.a; sourceTree = "<group>"; };
 		7291DFB61E1EF66400359D2C /* FreeTDS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FreeTDS.h; sourceTree = "<group>"; };
 		7291DFCF1E1FBA8000359D2C /* tds_sysdep_public.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tds_sysdep_public.h; path = src/freetds/include/tds_sysdep_public.h; sourceTree = "<group>"; };
 		72AD133D2316FFB700C87C40 /* sleep.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sleep.c; path = src/freetds/src/utils/sleep.c; sourceTree = "<group>"; };
@@ -204,21 +198,15 @@
 		72AD13492316FFB700C87C40 /* hmac_md5.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hmac_md5.c; path = src/freetds/src/utils/hmac_md5.c; sourceTree = "<group>"; };
 		72AD134A2316FFB700C87C40 /* net.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = net.c; path = src/freetds/src/utils/net.c; sourceTree = "<group>"; };
 		72AD13682317006400C87C40 /* iconv.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = iconv.c; path = src/freetds/src/replacements/iconv.c; sourceTree = "<group>"; };
-		72B8CB001D1C4FEA000DE30C /* libcrypto.35.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcrypto.35.tbd; path = usr/lib/libcrypto.35.tbd; sourceTree = SDKROOT; };
-		72B8CB021D1C4FF0000DE30C /* libssl.35.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libssl.35.tbd; path = usr/lib/libssl.35.tbd; sourceTree = SDKROOT; };
-		72BDDBED1B2B00F40073F4C9 /* libssl.0.9.8.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.0.9.8.dylib; path = usr/lib/libssl.0.9.8.dylib; sourceTree = SDKROOT; };
-		72BDDBF01B2B03130073F4C9 /* libcrypto.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcrypto.dylib; path = usr/lib/libcrypto.dylib; sourceTree = SDKROOT; };
-		72BDDBF21B2B031B0073F4C9 /* libssl.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.dylib; path = usr/lib/libssl.dylib; sourceTree = SDKROOT; };
-		72BDDBF41B2B04600073F4C9 /* libgssapi_krb5.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libgssapi_krb5.dylib; path = usr/lib/libgssapi_krb5.dylib; sourceTree = SDKROOT; };
-		72D6B8461D819BD700D8F697 /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../../../../../../../../../usr/local/Cellar/openssl/1.0.2h_1/lib/libcrypto.a; sourceTree = "<group>"; };
-		72D6B8471D819BD700D8F697 /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../../../../../../../../../usr/local/Cellar/openssl/1.0.2h_1/lib/libssl.a; sourceTree = "<group>"; };
-		72F47B391D217F9400D9C207 /* libssl.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libssl.tbd; path = usr/lib/libssl.tbd; sourceTree = SDKROOT; };
-		72F47B3B1D217F9C00D9C207 /* libcrypto.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcrypto.tbd; path = usr/lib/libcrypto.tbd; sourceTree = SDKROOT; };
 		DE0B0CE72C1ADC5000985441 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		DE34E21F2C5D91910075F52B /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = libs/simulator/libcrypto.a; sourceTree = "<group>"; };
+		DE34E2202C5D91910075F52B /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = libs/simulator/libssl.a; sourceTree = "<group>"; };
+		DE3CBF822C5E37D2007466FF /* libcrypto.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libcrypto.xcframework; path = libs/iOS/libcrypto.xcframework; sourceTree = "<group>"; };
+		DE3CBF862C5E37DD007466FF /* libssl.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libssl.xcframework; path = libs/iOS/libssl.xcframework; sourceTree = "<group>"; };
 		DEDD52902B619785006A4A52 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		DEDD52912B619785006A4A52 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
-		DEFD089A2B62ED2C006BABA8 /* FreeTDS-macos-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "FreeTDS-macos-Info.plist"; sourceTree = "<group>"; };
-		DEFD089C2B62ED31006BABA8 /* FreeTDS-ios-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "FreeTDS-ios-Info.plist"; sourceTree = "<group>"; };
+		DEFD089A2B62ED2C006BABA8 /* FreeTDS-macOS-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "FreeTDS-macOS-Info.plist"; sourceTree = "<group>"; };
+		DEFD089C2B62ED31006BABA8 /* FreeTDS-iOS-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "FreeTDS-iOS-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -226,11 +214,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7203D1B71E1EA2C400DC960E /* libcrypto.a in Frameworks */,
-				7203D1B81E1EA2C400DC960E /* libssl.a in Frameworks */,
-				6587B586144EBF310081A62B /* Foundation.framework in Frameworks */,
-				6587B585144EA6940081A62B /* libiconv.dylib in Frameworks */,
+				DE5E193F2C5D501900F35B84 /* libcrypto.a in Frameworks */,
+				DE5E19402C5D501900F35B84 /* libssl.a in Frameworks */,
 				DE0B0CE82C1ADC5700985441 /* libz.tbd in Frameworks */,
+				6587B586144EBF310081A62B /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -238,10 +225,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7203D1BB1E1EA2D000DC960E /* libcrypto.a in Frameworks */,
-				7203D1BC1E1EA2D000DC960E /* libssl.a in Frameworks */,
+				DE3CBF832C5E37D2007466FF /* libcrypto.xcframework in Frameworks */,
 				7203D1A11E1EA27300DC960E /* Foundation.framework in Frameworks */,
-				7203D1A21E1EA27300DC960E /* libiconv.dylib in Frameworks */,
+				DE3CBF872C5E37DD007466FF /* libssl.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -255,8 +241,8 @@
 				6521F188144E6B1500CBCC36 /* FreeTDS */,
 				6521F181144E6B1500CBCC36 /* Frameworks */,
 				6521F180144E6B1500CBCC36 /* Products */,
-				DEFD089C2B62ED31006BABA8 /* FreeTDS-ios-Info.plist */,
-				DEFD089A2B62ED2C006BABA8 /* FreeTDS-macos-Info.plist */,
+				DEFD089A2B62ED2C006BABA8 /* FreeTDS-macOS-Info.plist */,
+				DEFD089C2B62ED31006BABA8 /* FreeTDS-iOS-Info.plist */,
 				DEDD52912B619785006A4A52 /* LICENSE */,
 				DEDD52902B619785006A4A52 /* README.md */,
 			);
@@ -265,8 +251,8 @@
 		6521F180144E6B1500CBCC36 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6521F17F144E6B1500CBCC36 /* FreeTDS-macos.framework */,
-				7203D1B31E1EA27300DC960E /* FreeTDS-ios.framework */,
+				6521F17F144E6B1500CBCC36 /* FreeTDS-macOS.framework */,
+				7203D1B31E1EA27300DC960E /* FreeTDS-iOS.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -274,35 +260,18 @@
 		6521F181144E6B1500CBCC36 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DE3CBF862C5E37DD007466FF /* libssl.xcframework */,
+				DE3CBF822C5E37D2007466FF /* libcrypto.xcframework */,
+				DE34E21F2C5D91910075F52B /* libcrypto.a */,
+				DE34E2202C5D91910075F52B /* libssl.a */,
 				DE0B0CE72C1ADC5000985441 /* libz.tbd */,
 				7203D1B91E1EA2D000DC960E /* libcrypto.a */,
 				7203D1BA1E1EA2D000DC960E /* libssl.a */,
 				7203D1B51E1EA2C400DC960E /* libcrypto.a */,
 				7203D1B61E1EA2C400DC960E /* libssl.a */,
-				724F93501D86F4F400FDFF6B /* libcrypto.a */,
-				724F93511D86F4F400FDFF6B /* libssl.a */,
-				72D6B8461D819BD700D8F697 /* libcrypto.a */,
-				72D6B8471D819BD700D8F697 /* libssl.a */,
-				72F47B3B1D217F9C00D9C207 /* libcrypto.tbd */,
-				72F47B391D217F9400D9C207 /* libssl.tbd */,
-				72B8CB021D1C4FF0000DE30C /* libssl.35.tbd */,
-				72B8CB001D1C4FEA000DE30C /* libcrypto.35.tbd */,
-				72BDDBF41B2B04600073F4C9 /* libgssapi_krb5.dylib */,
-				72BDDBF21B2B031B0073F4C9 /* libssl.dylib */,
-				72BDDBF01B2B03130073F4C9 /* libcrypto.dylib */,
-				72BDDBED1B2B00F40073F4C9 /* libssl.0.9.8.dylib */,
 				6521F187144E6B1500CBCC36 /* Foundation.framework */,
-				6587B584144EA6940081A62B /* libiconv.dylib */,
-				6521F184144E6B1500CBCC36 /* Other Frameworks */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		6521F184144E6B1500CBCC36 /* Other Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = "Other Frameworks";
 			sourceTree = "<group>";
 		};
 		6521F188144E6B1500CBCC36 /* FreeTDS */ = {
@@ -319,7 +288,6 @@
 			isa = PBXGroup;
 			children = (
 				6587B60E14521A300081A62B /* freetds.conf */,
-				6521F18A144E6B1500CBCC36 /* FreeTDS-macos-Info.plist */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -478,9 +446,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		6521F17E144E6B1500CBCC36 /* FreeTDS-macos */ = {
+		6521F17E144E6B1500CBCC36 /* FreeTDS-macOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6521F194144E6B1500CBCC36 /* Build configuration list for PBXNativeTarget "FreeTDS-macos" */;
+			buildConfigurationList = 6521F194144E6B1500CBCC36 /* Build configuration list for PBXNativeTarget "FreeTDS-macOS" */;
 			buildPhases = (
 				6521F17B144E6B1500CBCC36 /* Frameworks */,
 				6521F17A144E6B1500CBCC36 /* Sources */,
@@ -491,14 +459,14 @@
 			);
 			dependencies = (
 			);
-			name = "FreeTDS-macos";
+			name = "FreeTDS-macOS";
 			productName = FreeTDS;
-			productReference = 6521F17F144E6B1500CBCC36 /* FreeTDS-macos.framework */;
+			productReference = 6521F17F144E6B1500CBCC36 /* FreeTDS-macOS.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		7203D1721E1EA27300DC960E /* FreeTDS-ios */ = {
+		7203D1721E1EA27300DC960E /* FreeTDS-iOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 7203D1B01E1EA27300DC960E /* Build configuration list for PBXNativeTarget "FreeTDS-ios" */;
+			buildConfigurationList = 7203D1B01E1EA27300DC960E /* Build configuration list for PBXNativeTarget "FreeTDS-iOS" */;
 			buildPhases = (
 				7203D19E1E1EA27300DC960E /* Frameworks */,
 				7203D1731E1EA27300DC960E /* Sources */,
@@ -509,9 +477,9 @@
 			);
 			dependencies = (
 			);
-			name = "FreeTDS-ios";
+			name = "FreeTDS-iOS";
 			productName = FreeTDS;
-			productReference = 7203D1B31E1EA27300DC960E /* FreeTDS-ios.framework */;
+			productReference = 7203D1B31E1EA27300DC960E /* FreeTDS-iOS.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
@@ -536,8 +504,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				6521F17E144E6B1500CBCC36 /* FreeTDS-macos */,
-				7203D1721E1EA27300DC960E /* FreeTDS-ios */,
+				6521F17E144E6B1500CBCC36 /* FreeTDS-macOS */,
+				7203D1721E1EA27300DC960E /* FreeTDS-iOS */,
 			);
 		};
 /* End PBXProject section */
@@ -682,26 +650,16 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = YES;
-				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -718,7 +676,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				SDKROOT = macosx;
-				VALID_ARCHS = "x86_64 arm64 armv7 armv7s";
+				VALID_ARCHS = "x86_64 arm64";
 			};
 			name = Release;
 		};
@@ -730,7 +688,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -751,7 +709,7 @@
 					"$(PROJECT_DIR)/src/freetds/include",
 					"$(PROJECT_DIR)/include",
 				);
-				INFOPLIST_FILE = "FreeTDS-macos-Info.plist";
+				INFOPLIST_FILE = "FreeTDS-macOS-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -763,16 +721,14 @@
 					"$(PROJECT_DIR)/libs/macOS",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
-				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++14";
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = net.developerpass.FreeTDS;
-				PRODUCT_MODULE_NAME = "FreeTDS-macos";
-				PRODUCT_NAME = "FreeTDS-macos";
+				PRODUCT_MODULE_NAME = "FreeTDS-macOS";
+				PRODUCT_NAME = "FreeTDS-macOS";
 				SDKROOT = macosx;
 				SUPPORTED_PLATFORMS = macosx;
 				USER_HEADER_SEARCH_PATHS = "";
-				VALID_ARCHS = "x86_64 i386 arm64";
+				VALID_ARCHS = "x86_64 arm64";
 				VERSIONING_SYSTEM = "apple-generic";
 				WRAPPER_EXTENSION = framework;
 			};
@@ -781,15 +737,19 @@
 		7203D1B21E1EA27300DC960E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD)";
+				ARCHS = (
+					arm64,
+					x86_64,
+				);
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				EXCLUDED_ARCHS = "";
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = "";
 				FRAMEWORK_VERSION = A;
 				GCC_C_LANGUAGE_STANDARD = "compiler-default";
@@ -807,7 +767,7 @@
 					"$(PROJECT_DIR)/src/freetds/include",
 					"$(PROJECT_DIR)/include",
 				);
-				INFOPLIST_FILE = "FreeTDS-ios-Info.plist";
+				INFOPLIST_FILE = "FreeTDS-iOS-Info.plist";
 				INSTALL_PATH = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LIBRARY_SEARCH_PATHS = (
@@ -815,15 +775,15 @@
 					"$(PROJECT_DIR)/libs/iOS",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
-				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++14";
 				PRODUCT_BUNDLE_IDENTIFIER = net.developerpass.FreeTDS;
-				PRODUCT_MODULE_NAME = "FreeTDS-ios";
-				PRODUCT_NAME = "FreeTDS-ios";
+				PRODUCT_MODULE_NAME = "FreeTDS-iOS";
+				PRODUCT_NAME = "FreeTDS-iOS";
 				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				USER_HEADER_SEARCH_PATHS = "";
-				VALID_ARCHS = "armv7 arm64 armv7s";
+				VALID_ARCHS = "arm64 x86_64 armv7";
 				WRAPPER_EXTENSION = framework;
 			};
 			name = Release;
@@ -839,7 +799,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		6521F194144E6B1500CBCC36 /* Build configuration list for PBXNativeTarget "FreeTDS-macos" */ = {
+		6521F194144E6B1500CBCC36 /* Build configuration list for PBXNativeTarget "FreeTDS-macOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6521F196144E6B1500CBCC36 /* Release */,
@@ -847,7 +807,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		7203D1B01E1EA27300DC960E /* Build configuration list for PBXNativeTarget "FreeTDS-ios" */ = {
+		7203D1B01E1EA27300DC960E /* Build configuration list for PBXNativeTarget "FreeTDS-iOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7203D1B21E1EA27300DC960E /* Release */,

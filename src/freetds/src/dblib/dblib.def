@@ -64,6 +64,7 @@ EXPORTS
 	dbgettime
 	dbgetuserdata
 	dbhasretstat
+	dbgetlasterror
 	dbinit
 	dbiordesc
 	dbiowdesc
@@ -147,6 +148,7 @@ EXPORTS
 	dbsprhead
 	dbsprline
 	dbsqlexec
+	dbsqlexecparams
 	dbsqlok
 	dbsqlsend
 	dbstrbuild

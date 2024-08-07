@@ -738,7 +738,11 @@ tds_init_openssl(void)
 	if (!tls_initialized) {
 		tds_mutex_lock(&tls_mutex);
 		if (!tls_initialized) {
-			SSL_library_init();
+            #if OPENSSL_VERSION_NUMBER < 0x10100000L
+                SSL_library_init();
+            #else
+                OPENSSL_init_ssl(0, NULL);
+            #endif
 			tds_init_openssl_thread();
 			tds_init_ssl_methods();
 			tls_initialized = 1;

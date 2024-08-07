@@ -170,6 +170,25 @@ tds_set_language(TDSLOGIN * tds_login, const char *language)
 	return !!tds_dstr_copy(&tds_login->language, language);
 }
 
+bool
+tds_set_encryption(TDSLOGIN * tds_login, const char *encryption_level)
+{
+    TDS_ENCRYPTION_LEVEL lvl = TDS_ENCRYPTION_OFF;
+
+    if (!strcasecmp(encryption_level, TDS_STR_ENCRYPTION_OFF))
+        ;
+    else if (!strcasecmp(encryption_level, TDS_STR_ENCRYPTION_REQUEST))
+        lvl = TDS_ENCRYPTION_REQUEST;
+    else if (!strcasecmp(encryption_level, TDS_STR_ENCRYPTION_REQUIRE))
+        lvl = TDS_ENCRYPTION_REQUIRE;
+    else {
+        return false;
+    }
+
+    tds_login->encryption_level = lvl;
+    return true;
+}
+
 struct tds_save_msg
 {
 	TDSMESSAGE msg;
@@ -441,10 +460,8 @@ tds_setup_connection(TDSSOCKET *tds, TDSLOGIN *login, bool set_db, bool set_spid
 		strcat(str, "\n");
 	}
 	if (IS_TDS50(tds->conn)) {
-		strcat(str, "SELECT CONVERT(NVARCHAR(3), 'abc') nvc\n");
+		strcat(str, "SELECT CAST('abc' AS NVARCHAR(3)) AS nvc\n");
 		parse_results = true;
-		if (tds->conn->product_version >= TDS_SYB_VER(12, 0, 0))
-			strcat(str, "EXECUTE ('SELECT CONVERT(UNIVARCHAR(3), ''xyz'') uvc')\n");
 	}
 
 	/* nothing to set, just return */

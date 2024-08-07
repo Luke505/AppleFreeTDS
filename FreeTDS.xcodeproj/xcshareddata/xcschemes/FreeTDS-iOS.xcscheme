@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "7203D1721E1EA27300DC960E"
-               BuildableName = "FreeTDS-ios.framework"
-               BlueprintName = "FreeTDS-ios"
+               BuildableName = "FreeTDS-iOS.framework"
+               BlueprintName = "FreeTDS-iOS"
                ReferencedContainer = "container:FreeTDS.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -44,8 +44,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7203D1721E1EA27300DC960E"
-            BuildableName = "FreeTDS-ios.framework"
-            BlueprintName = "FreeTDS-ios"
+            BuildableName = "FreeTDS-iOS.framework"
+            BlueprintName = "FreeTDS-iOS"
             ReferencedContainer = "container:FreeTDS.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -60,8 +60,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7203D1721E1EA27300DC960E"
-            BuildableName = "FreeTDS-ios.framework"
-            BlueprintName = "FreeTDS-ios"
+            BuildableName = "FreeTDS-iOS.framework"
+            BlueprintName = "FreeTDS-iOS"
             ReferencedContainer = "container:FreeTDS.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
